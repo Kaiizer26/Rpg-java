@@ -18,9 +18,9 @@ public class rpg_main {
     private static Combat combatManager = new Combat(ui);
     // Instance du gestionnaire d'équipe
     private static TeamManager teamManager = new TeamManager(ui);
-    // NOUVEAU : Instance de l'inventaire global
+    // Instance de l'inventaire global
     private static GlobalInventory globalInventory = new GlobalInventory();
-    // NOUVEAU : Instance du gestionnaire de personnalisation
+    // Instance du gestionnaire de personnalisation
     private static CustomizationManager customizationManager = new CustomizationManager(ui, teamManager, globalInventory);
 
     /**
@@ -37,13 +37,10 @@ public class rpg_main {
         knight2.setStat(Stat.SPEED, 60);
         knight2.setStat(Stat.LUCK, 57);
 
-        // NOUVEAU : Ajout d'objets à l'inventaire GLOBAL au lieu de l'inventaire du personnage
-        globalInventory.addItem("Pistolet", 1);
-        globalInventory.addItem("Arbre", 1);
-        globalInventory.addItem("Zebre", 1);
+        // Ajout d'objets à l'inventaire global
+        globalInventory.addItem("Table Ikea", 1);
         globalInventory.addItem("Potion de soin", 5);
-        globalInventory.addItem("Épée rouillée", 2);
-        globalInventory.addItem("Bouclier en bois", 1);
+
 
         // Création d'autres personnages pour la collection
         Chevalier jordy = new Chevalier("Jordy");
@@ -65,7 +62,17 @@ public class rpg_main {
     }
 
     /**
-     * Démarre un tournoi avec l'équipe active
+     * Vérifie si l'équipe a des membres vivants
+     */
+    private static boolean hasAliveTeamMembers(List<Ally> team) {
+        for (Ally ally : team) {
+            if (ally.getStat(Stat.HP) > 0) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Démarre un tournoi avec l'équipe complète (NOUVEAU SYSTÈME)
      */
     private static void startTournamentWithTeam() throws IOException, InterruptedException {
         List<Ally> activeTeam = teamManager.getActiveTeam();
@@ -80,9 +87,8 @@ public class rpg_main {
             return;
         }
 
-        // AMÉLIORATION : Vérifier qu'il y a au moins un personnage vivant
-        Ally firstAliveMember = teamManager.getFirstAliveMember();
-        if (firstAliveMember == null) {
+        // Vérifier qu'il y a au moins un personnage vivant
+        if (!hasAliveTeamMembers(activeTeam)) {
             ui.clearScreen();
             ui.printColoredLine("❌ Aucun personnage vivant dans l'équipe !", TextColor.ANSI.RED);
             ui.printColoredLine("Tous vos personnages sont morts. Allez dans 'Personnalisation' pour les soigner.", TextColor.ANSI.YELLOW);
@@ -92,48 +98,136 @@ public class rpg_main {
             return;
         }
 
-        // Utiliser le premier membre vivant de l'équipe
-        Personnage selectedHero = firstAliveMember;
+        // Affichage des informations de l'équipe avant le combat
+        ui.clearScreen();
+        ui.printColoredLine("🏆 TOURNOI D'ÉQUIPE", TextColor.ANSI.CYAN);
+        ui.printLine("");
+        ui.printColoredLine("Votre équipe:", TextColor.ANSI.GREEN);
 
-        if (selectedHero instanceof Chevalier) {
-            // Créer des adversaires
-            Chevalier[] enemies = {new Chevalier("Jordy Enemy"), new Chevalier("Johan Enemy")};
+        int aliveCount = 0;
+        for (Ally ally : activeTeam) {
+            String statusIcon = ally.getStat(Stat.HP) > 0 ? "⚔️" : "💀";
+            TextColor statusColor = ally.getStat(Stat.HP) > 0 ? TextColor.ANSI.GREEN : TextColor.ANSI.RED;
 
-            ui.clearScreen();
-            ui.printColoredLine("🏆 Tournoi avec " + selectedHero.getName(), TextColor.ANSI.CYAN);
-            ui.printColoredText("Niveau: ", TextColor.ANSI.YELLOW);
-            ui.printLine(selectedHero.getLevel() + "");
-            ui.printColoredText("HP: ", TextColor.ANSI.GREEN);
-            ui.printLine(selectedHero.getStat(Stat.HP) + "");
+            ui.printColoredText(statusIcon + " ", statusColor);
+            ui.printColoredText(ally.getName(), TextColor.ANSI.YELLOW);
+            ui.printColoredText(" (Niv." + ally.getLevel() + ")", TextColor.ANSI.CYAN);
+            ui.printColoredText(" HP: " + ally.getStat(Stat.HP), statusColor);
             ui.printLine("");
-            ui.printColoredLine("Appuyez sur une touche pour commencer...", TextColor.ANSI.YELLOW);
+
+            if (ally.getStat(Stat.HP) > 0) aliveCount++;
+        }
+
+        ui.printLine("");
+        ui.printColoredText("Combattants disponibles: ", TextColor.ANSI.YELLOW);
+        ui.printLine(aliveCount + "");
+        ui.printLine("");
+        ui.printColoredLine("Appuyez sur une touche pour commencer le tournoi...", TextColor.ANSI.YELLOW);
+        ui.waitForKeyPress();
+
+        // Créer des adversaires pour le tournoi
+        Personnage[] enemies = {
+                new Chevalier("Garde du Roi", 80, 25, 35, 20, 15, false),
+                new Chevalier("Champion de l'Arène", 120, 30, 45, 25, 20, false)
+        };
+
+        // NOUVEAU : Utiliser le système de combat en équipe
+        combatManager.startTeamTournament(activeTeam, enemies);
+
+        // Après le tournoi, donner de l'expérience aux survivants
+        int survivors = 0;
+        for (Ally ally : activeTeam) {
+            if (ally.getStat(Stat.HP) > 0) {
+                survivors++;
+                ally.addExperience(75); // Bonus d'expérience pour les survivants
+            }
+        }
+
+        if (survivors > 0) {
+            ui.clearScreen();
+            ui.printColoredLine("🎉 Tournoi terminé !", TextColor.ANSI.GREEN);
+            ui.printColoredLine("Survivants: " + survivors + "/" + activeTeam.size(), TextColor.ANSI.YELLOW);
+            ui.printColoredLine("+" + 75 + " EXP bonus pour chaque survivant !", TextColor.ANSI.MAGENTA);
+            ui.printLine("");
+            ui.printColoredLine("Appuyez sur une touche pour continuer...", TextColor.ANSI.CYAN);
             ui.waitForKeyPress();
+        }
+    }
 
-            combatManager.startTournament((Chevalier) selectedHero, enemies);
+    /**
+     * NOUVELLE MÉTHODE : Combat d'entraînement contre un seul ennemi
+     */
+    private static void startTrainingCombat() throws IOException, InterruptedException {
+        List<Ally> activeTeam = teamManager.getActiveTeam();
 
-            // NOUVEAU : Après le combat, donner de l'expérience
-            if (selectedHero.getStat(Stat.HP) > 0) { // Si le héros a survécu
-                selectedHero.addExperience(50); // 50 exp pour avoir participé au tournoi
+        if (activeTeam.isEmpty()) {
+            ui.clearScreen();
+            ui.printColoredLine("❌ Aucun personnage dans l'équipe active !", TextColor.ANSI.RED);
+            ui.printColoredLine("Allez dans 'Équipe' pour composer votre équipe.", TextColor.ANSI.YELLOW);
+            ui.printLine("");
+            ui.printColoredLine("Appuyez sur une touche pour continuer...", TextColor.ANSI.CYAN);
+            ui.waitForKeyPress();
+            return;
+        }
 
+        if (!hasAliveTeamMembers(activeTeam)) {
+            ui.clearScreen();
+            ui.printColoredLine("❌ Aucun personnage vivant dans l'équipe !", TextColor.ANSI.RED);
+            ui.printColoredLine("Tous vos personnages sont morts.", TextColor.ANSI.YELLOW);
+            ui.printLine("");
+            ui.printColoredLine("Appuyez sur une touche pour continuer...", TextColor.ANSI.CYAN);
+            ui.waitForKeyPress();
+            return;
+        }
+
+        ui.clearScreen();
+        ui.printColoredLine("⚔️ COMBAT D'ENTRAÎNEMENT", TextColor.ANSI.CYAN);
+        ui.printLine("");
+        ui.printColoredLine("Choisissez votre adversaire:", TextColor.ANSI.YELLOW);
+
+        String[] enemyOptions = {
+                "🛡️ Garde débutant (Facile)",
+                "⚔️ Soldat expérimenté (Moyen)",
+                "👑 Chevalier royal (Difficile)",
+                "🔙 Retour"
+        };
+
+        int choice = ui.showMenu(enemyOptions, "Adversaire:");
+
+        Personnage enemy = null;
+        switch (choice) {
+            case 1:
+                enemy = new Chevalier("Garde débutant", 60, 15, 25, 15, 10, false);
+                break;
+            case 2:
+                enemy = new Chevalier("Soldat expérimenté", 85, 20, 35, 20, 15, false);
+                break;
+            case 3:
+                enemy = new Chevalier("Chevalier royal", 110, 25, 45, 25, 20, false);
+                break;
+            case 4:
+                return; // Retour
+        }
+
+        if (enemy != null) {
+            boolean won = combatManager.startTeamVsEnemyCombat(activeTeam, enemy);
+
+            // Donner de l'expérience après le combat d'entraînement
+            int expGain = 25; // Moins d'exp qu'un tournoi
+            for (Ally ally : activeTeam) {
+                if (ally.getStat(Stat.HP) > 0) {
+                    ally.addExperience(expGain);
+                }
+            }
+
+            if (won) {
                 ui.clearScreen();
-                ui.printColoredLine("🎉 Tournoi terminé !", TextColor.ANSI.GREEN);
-                ui.printColoredLine("+" + 50 + " EXP gagné !", TextColor.ANSI.YELLOW);
-                ui.printColoredText("Niveau actuel: ", TextColor.ANSI.CYAN);
-                ui.printLine(selectedHero.getLevel() + "");
-                ui.printColoredText("EXP: ", TextColor.ANSI.CYAN);
-                ui.printLine(selectedHero.getExperience() + "/" + selectedHero.getExperienceToNextLevel());
+                ui.printColoredLine("✅ Combat d'entraînement terminé !", TextColor.ANSI.GREEN);
+                ui.printColoredLine("+" + expGain + " EXP pour les survivants !", TextColor.ANSI.YELLOW);
                 ui.printLine("");
                 ui.printColoredLine("Appuyez sur une touche pour continuer...", TextColor.ANSI.CYAN);
                 ui.waitForKeyPress();
             }
-
-        } else {
-            ui.clearScreen();
-            ui.printColoredLine("❌ Le personnage sélectionné ne peut pas participer au tournoi.", TextColor.ANSI.RED);
-            ui.printColoredLine("Seuls les Chevaliers peuvent participer pour l'instant.", TextColor.ANSI.YELLOW);
-            ui.printLine("");
-            ui.printColoredLine("Appuyez sur une touche pour continuer...", TextColor.ANSI.CYAN);
-            ui.waitForKeyPress();
         }
     }
 
@@ -167,6 +261,43 @@ public class rpg_main {
         ui.waitForKeyPress();
     }
 
+    /**
+     * NOUVEAU : Menu de combat avec plusieurs options
+     */
+    private static void showCombatMenu() throws IOException, InterruptedException {
+        boolean continueCombat = true;
+
+        while (continueCombat) {
+            ui.clearScreen();
+            ui.printColoredLine("⚔️ MENU DE COMBAT", TextColor.ANSI.CYAN);
+            ui.printLine("");
+
+            String[] combatOptions = {
+                    "🏆 Tournoi (Combat contre plusieurs ennemis)",
+                    "⚔️ Combat d'entraînement (Combat contre un ennemi)",
+                    "🔧 Informations de debug",
+                    "🔙 Retour au menu principal"
+            };
+
+            int choice = ui.showMenu(combatOptions, "Que voulez-vous faire ?");
+
+            switch (choice) {
+                case 1:
+                    startTournamentWithTeam();
+                    break;
+                case 2:
+                    startTrainingCombat();
+                    break;
+                case 3:
+                    showDebugInfo();
+                    break;
+                case 4:
+                    continueCombat = false;
+                    break;
+            }
+        }
+    }
+
     public static void main(String[] args) {
         try {
             // Initialisation de l'interface utilisateur
@@ -175,25 +306,25 @@ public class rpg_main {
             // Initialisation des personnages et de l'équipe
             initializeCharacters();
 
-            // === ÉCRAN DE TITRE ===
+            // Écran de titre
             ui.showTitleScreen();
 
-            // === BOUCLE PRINCIPALE DU JEU ===
+            // Boucle principale du jeu
             boolean continueGame = true;
 
             while (continueGame) {
                 int menuChoice = ui.showMainMenu();
 
                 switch (menuChoice) {
-                    case 1: // Rejoindre le tournoi
-                        startTournamentWithTeam();
+                    case 1:
+                        showCombatMenu();
                         break;
 
                     case 2: // Équipe
                         teamManager.showTeamManagementMenu();
                         break;
 
-                    case 3: // Personnalisation - NOUVEAU : Implémenté !
+                    case 3: // Personnalisation
                         customizationManager.showCustomizationMenu();
                         break;
 
@@ -216,7 +347,7 @@ public class rpg_main {
 
         } catch (IOException | InterruptedException e) {
             System.err.println("Erreur durant l'exécution du jeu : " + e.getMessage());
-            e.printStackTrace(); // AMÉLIORATION : Afficher la stack trace pour debug
+            e.printStackTrace();
         } finally {
             // Nettoyage de l'interface utilisateur
             try {
