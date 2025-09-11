@@ -23,7 +23,7 @@ public abstract class Personnage implements IPersonnage {
         stats.put(Stat.DEFENSE, 15);
         stats.put(Stat.SPEED, 75);
         stats.put(Stat.LUCK, 5);
-        this.start=true;
+        this.start=false;
         this.inventory = new TreeMap<>();
     }
     public Personnage(String name){

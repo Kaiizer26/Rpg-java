@@ -2,6 +2,7 @@ package combat;
 
 // Ajoutez ces imports en haut de votre classe Combat.java
 import personnage.Ally;
+import personnage.Personnage;
 import stats.StatCombat;
 import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.input.KeyStroke;
@@ -31,13 +32,13 @@ public class Combat {
     /**
      * Détermine qui attaque en premier selon la vitesse
      */
-    private void determineFirstAttacker(Chevalier knight1, Chevalier knight2) {
-        if (knight1.getStat(Stat.SPEED) >= knight2.getStat(Stat.SPEED)) {
-            knight1.setStart(true);
-            knight2.setStart(false);
+    private void determineFirstAttacker(Personnage player, Personnage ennemy) {
+        if (player.getStat(Stat.SPEED) >= ennemy.getStat(Stat.SPEED)) {
+            player.setStart(true);
+            ennemy.setStart(false);
         } else {
-            knight2.setStart(true);
-            knight1.setStart(false);
+            ennemy.setStart(true);
+            player.setStart(false);
         }
     }
 
@@ -55,7 +56,7 @@ public class Combat {
      * Gère le tour de combat d'un joueur
      * @return true si le combat continue, false si le joueur fuit
      */
-    private boolean handlePlayerTurn(Chevalier player, Chevalier enemy) throws IOException, InterruptedException {
+    private boolean handlePlayerTurn(Personnage player, Personnage enemy) throws IOException, InterruptedException {
         ui.printColoredLine("🗡 Tour de " + player.getName(), TextColor.ANSI.CYAN);
 
         String[] options = {"Attaquer", "Fuir"};
@@ -84,7 +85,7 @@ public class Combat {
     /**
      * Gère le tour de combat d'un ennemi avec système de dodge interactif
      */
-    private void handleEnemyTurn(Chevalier enemy, Chevalier player) throws IOException, InterruptedException {
+    private void handleEnemyTurn(Personnage enemy, Personnage player) throws IOException, InterruptedException {
         ui.displayCombatStatus(player, enemy);
 
         ui.printColoredLine("💀 Tour de " + enemy.getName(), TextColor.ANSI.RED);
@@ -119,10 +120,10 @@ public class Combat {
     }
 
     /**
-     * Gère un combat individuel entre le joueur et un ennemi
+     * Gère un combat individuel entre le joueur et un ennemi (version alternative)
      * @return true si le joueur a gagné, false s'il a perdu ou fui
      */
-    private boolean handleSingleCombat(Chevalier player, Chevalier enemy) throws IOException, InterruptedException {
+    private boolean handleSingleCombat(Personnage player, Personnage enemy) throws IOException, InterruptedException {
         // Déterminer qui commence
         determineFirstAttacker(player, enemy);
 
@@ -130,29 +131,30 @@ public class Combat {
         ui.animatedText("🎯 Adversaire: " + enemy.getName(), TextColor.ANSI.RED, 30);
         Thread.sleep(1500);
 
+        // Variable pour suivre le tour actuel
+        boolean playerTurn = player.isStart();
+
         // Boucle de combat principal
         while (player.getStat(Stat.HP) > 0 && enemy.getStat(Stat.HP) > 0) {
             ui.displayCombatStatus(player, enemy);
 
-            // Tour du joueur
-            if (player.isStart()) {
+            if (playerTurn) {
+                // Tour du joueur
                 boolean continuesCombat = handlePlayerTurn(player, enemy);
                 if (!continuesCombat) {
                     return false; // Joueur a fui
                 }
                 Thread.sleep(2000);
-            }
-
-            // Tour de l'ennemi (si il est encore vivant)
-            if (enemy.getStat(Stat.HP) > 0) {
+            } else {
+                // Tour de l'ennemi
                 handleEnemyTurn(enemy, player);
                 Thread.sleep(2000);
             }
 
-            // Alternance des tours
-            boolean temp = player.isStart();
-            player.setStart(enemy.isStart());
-            enemy.setStart(temp);
+            // Alternance des tours (seulement si les deux sont encore vivants)
+            if (player.getStat(Stat.HP) > 0 && enemy.getStat(Stat.HP) > 0) {
+                playerTurn = !playerTurn;
+            }
         }
 
         return player.getStat(Stat.HP) > 0; // true si le joueur a gagné
@@ -163,7 +165,7 @@ public class Combat {
      * @param player Le joueur
      * @param enemies Tableau des ennemis à affronter
      */
-    public void startTournament(Chevalier player, Chevalier[] enemies) throws IOException, InterruptedException {
+    public void startTournament(Personnage player, Personnage[] enemies) throws IOException, InterruptedException {
         // Affichage du héros du joueur
         ui.showPlayerHeroSection(player);
 

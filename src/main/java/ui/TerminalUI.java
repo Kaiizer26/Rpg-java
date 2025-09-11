@@ -6,6 +6,7 @@ import com.googlecode.lanterna.terminal.Terminal;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
 import personnage.Chevalier;
+import personnage.Personnage;
 import stats.Stat;
 
 import java.io.IOException;
@@ -217,7 +218,7 @@ public class TerminalUI {
     /**
      * Affiche les statistiques d'un personnage de manière stylisée
      */
-    public void displayCharacterStats(Chevalier character, TextColor nameColor) throws IOException {
+    public void displayCharacterStats(Personnage character, TextColor nameColor) throws IOException {
         printColoredLine("═══════════════════════════════════════", TextColor.ANSI.BLUE);
         printColoredText("⚔ ", TextColor.ANSI.YELLOW);
         printColoredLine(character.getName().toUpperCase(), nameColor);
@@ -259,7 +260,7 @@ public class TerminalUI {
     /**
      * Affiche l'état actuel du combat entre deux personnages
      */
-    public void displayCombatStatus(Chevalier player, Chevalier enemy) throws IOException {
+    public void displayCombatStatus(Personnage player, Personnage enemy) throws IOException {
         clearScreen();
 
         printColoredLine("⚔═══════════ COMBAT ═══════════⚔", TextColor.ANSI.RED);
@@ -287,8 +288,8 @@ public class TerminalUI {
     public void showTitleScreen() throws IOException, InterruptedException {
         clearScreen();
         animatedText("╔══════════════════════════════════════╗", TextColor.ANSI.MAGENTA, 20);
-        animatedText("║          RPG TEXTUEL v1.0            ║", TextColor.ANSI.MAGENTA, 20);
-        animatedText("║     Inspiré de Clair Obscur 33      ║", TextColor.ANSI.MAGENTA, 20);
+        animatedText("║              Tower 33                ║", TextColor.ANSI.MAGENTA, 20);
+        animatedText("║      Inspiré de Clair Obscur 33      ║", TextColor.ANSI.MAGENTA, 20);
         animatedText("╚══════════════════════════════════════╝", TextColor.ANSI.MAGENTA, 20);
 
         printLine("");
@@ -334,12 +335,12 @@ public class TerminalUI {
     /**
      * Affiche la section des adversaires
      */
-    public void showAdversariesSection(Chevalier[] enemies) throws IOException {
+    public void showAdversariesSection(Personnage[] enemies) throws IOException {
         clearScreen();
         printColoredLine("💀 VOS ADVERSAIRES 💀", TextColor.ANSI.RED);
         printLine("");
 
-        for (Chevalier ennemi : enemies) {
+        for (Personnage ennemi : enemies) {
             displayCharacterStats(ennemi, TextColor.ANSI.RED);
         }
 
@@ -350,7 +351,7 @@ public class TerminalUI {
     /**
      * Affiche la section du héros du joueur
      */
-    public void showPlayerHeroSection(Chevalier player) throws IOException {
+    public void showPlayerHeroSection(Personnage player) throws IOException {
         clearScreen();
         displayCharacterStats(player, TextColor.ANSI.CYAN);
         printColoredLine("Appuyez sur une touche pour voir vos adversaires...", TextColor.ANSI.CYAN);

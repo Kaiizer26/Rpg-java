@@ -36,7 +36,7 @@ public class rpg_main {
             Chevalier[] knightTab = {new Chevalier("Jordy"), new Chevalier("Johan")};
 
             // Code pour d'autres personnages (optionnel)
-            Personnage[] persos = {new Ennemi("Joepoknoob77"), new Gobelin("Jordy"), new Chevalier("Kaiizerrr")};
+            Personnage[] ennemies = {new Ennemi("Joepoknoob77"), new Gobelin("Jordy"), new Gobelin("Kaiizerrr")};
             List<Personnage> equipe = new ArrayList<>();
             equipe.add(new Chevalier("Maelle"));
             equipe.add(new Gobelin("Frantz"));
@@ -57,7 +57,7 @@ public class rpg_main {
 
                 switch (menuChoice) {
                     case 1: // Rejoindre le tournoi
-                        combatManager.startTournament(knight1, knightTab);
+                        combatManager.startTournament(knight1, ennemies);
                         break;
 
                     case 2: // Equipe
