@@ -23,11 +23,10 @@ public class ShopManager {
     // Prix et objets disponibles
     private static final int ALLY_BASE_PRICE = 100;
     private static final String[][] SHOP_ITEMS = {
-            {"Potion de soin", "50", "Restaure 30 HP"},
-            {"Potion de mana", "40", "Restaure 20 MP"},
-            {"Épée en fer", "150", "Augmente l'attaque de 10"},
-            {"Bouclier en fer", "120", "Augmente la défense de 8"},
-            {"Amulette de chance", "200", "Augmente la chance de 15"}
+            {"Potion de soin", "50", "Restaure 65% HP"},
+            {"Tondeuse Wahl", "38", "Permet de faire des taper fade"},
+            {"Bâton de Luden abîmé", "100", "Permettait de faire de la magie autrefois"},
+            {"Compte Radiant 1083RR", "120", "En stock nul part sauf ici"}
     };
 
     public ShopManager(TerminalUI ui, TeamManager teamManager, GlobalInventory globalInventory) {
@@ -194,8 +193,8 @@ public class ShopManager {
         return new Ally[] {
                 new Chevalier("Recrue Élite", 70, 20, 30, 25, 18, true),
                 new Chevalier("Vétéran", 90, 25, 40, 20, 22, true),
-                new Chevalier("Champion", 110, 30, 50, 30, 25, true),
-                new Chevalier("Légende", 140, 35, 65, 35, 30, true)
+                new Chevalier("Champion", 99, 30, 50, 30, 25, true),
+                new Chevalier("Légende", 99, 35, 65, 35, 30, true)
         };
     }
 
