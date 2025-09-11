@@ -18,11 +18,9 @@ public abstract class Personnage implements IPersonnage {
         this.name = "Bot";
         this.stats = new EnumMap<>(Stat.class);
         this.statsCombat = new EnumMap<>(StatCombat.class);
-        stats.put(Stat.HP, 50);
-        stats.put(Stat.ATTAQUE, 50);
-        stats.put(Stat.DEFENSE, 15);
-        stats.put(Stat.SPEED, 75);
-        stats.put(Stat.LUCK, 5);
+        for (Stat stat : Stat.values()) {
+            stats.put(stat, random.nextInt(100)); // pour chaque stat aléatoire de 0 à 99
+        }
         this.start=false;
         this.inventory = new TreeMap<>();
     }
@@ -94,16 +92,19 @@ public abstract class Personnage implements IPersonnage {
         return this.inventory;
     }
 
-    public void addItem(String name, Integer nb){
-        this.inventory.put(name, nb);
+    public void addItem(String name, int nb) {
+        this.inventory.put(name, this.inventory.getOrDefault(name, 0) + nb);
     }
 
-    public void removeItem(String name){
-        this.inventory.remove(name);
-    }
-    public boolean dodge(){
-        boolean dodgerand = random.nextBoolean();
-        return dodgerand;
+    public void decrementItem(String name, int nb) {
+        int current = this.inventory.getOrDefault(name, 0);
+        int newValue = current - nb;
+
+        if (newValue > 0) {
+            this.inventory.put(name, newValue);
+        } else {
+            this.inventory.remove(name); // si nb négatif de l'objet on supp
+        }
     }
 
     public String EndCombatMessage(){

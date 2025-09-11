@@ -1,10 +1,8 @@
-import personnage.Chevalier;
-import personnage.Ennemi;
-import personnage.Gobelin;
-import personnage.Personnage;
+import personnage.*;
 import stats.Stat;
 import ui.TerminalUI;
 import combat.Combat;
+import team.TeamManager;
 import com.googlecode.lanterna.TextColor;
 
 import java.io.IOException;
@@ -16,35 +14,94 @@ public class rpg_main {
     private static TerminalUI ui = new TerminalUI();
     // Instance du gestionnaire de combat
     private static Combat combatManager = new Combat(ui);
+    // Instance du gestionnaire d'équipe
+    private static TeamManager teamManager = new TeamManager(ui);
+
+    /**
+     * Initialise les personnages et la collection
+     */
+    private static void initializeCharacters() {
+        // Création des personnages principaux
+        Chevalier knight1 = new Chevalier("Gustave", 99, 32, 45, 45, 57, true);
+        Chevalier knight2 = new Chevalier();
+        knight2.setName("Simon");
+        knight2.setStat(Stat.HP, 99);
+        knight2.setStat(Stat.DEFENSE, 32);
+        knight2.setStat(Stat.ATTAQUE, 85);
+        knight2.setStat(Stat.SPEED, 60);
+        knight2.setStat(Stat.LUCK, 57);
+
+        // Ajout d'objets à l'inventaire de Gustave
+        knight1.addItem("Pistolet", 1);
+        knight1.addItem("Arbre", 1);
+        knight1.addItem("Zebre", 1);
+
+        // Création d'autres personnages pour la collection
+        Chevalier jordy = new Chevalier("Jordy");
+        Chevalier johan = new Chevalier("Johan");
+        Chevalier maelle = new Chevalier("Maelle");
+        Chevalier kaiizer = new Chevalier("Kaiizerrr");
+
+        // Ajout de tous les personnages à la collection
+        teamManager.addToCollection(knight1);
+        teamManager.addToCollection(knight2);
+        teamManager.addToCollection(jordy);
+        teamManager.addToCollection(johan);
+        teamManager.addToCollection(maelle);
+        teamManager.addToCollection(kaiizer);
+
+        // Formation d'une équipe initiale avec les personnages principaux
+        teamManager.addToTeam(knight1);
+        teamManager.addToTeam(knight2);
+    }
+
+    /**
+     * Démarre un tournoi avec l'équipe active
+     */
+    private static void startTournamentWithTeam() throws IOException, InterruptedException {
+        List<Ally> activeTeam = teamManager.getActiveTeam();
+
+        if (activeTeam.isEmpty()) {
+            ui.clearScreen();
+            ui.printColoredLine("❌ Aucun personnage dans l'équipe active !", TextColor.ANSI.RED);
+            ui.printColoredLine("Allez dans 'Équipe' pour composer votre équipe.", TextColor.ANSI.YELLOW);
+            ui.printLine("");
+            ui.printColoredLine("Appuyez sur une touche pour continuer...", TextColor.ANSI.CYAN);
+            ui.waitForKeyPress();
+            return;
+        }
+
+        // Pour l'instant, utiliser le premier membre de l'équipe
+        Personnage selectedHero = activeTeam.get(0);
+
+        if (selectedHero instanceof Chevalier) {
+            // Créer des adversaires
+            Chevalier[] enemies = {new Chevalier("Jordy Enemy"), new Chevalier("Johan Enemy")};
+
+            ui.clearScreen();
+            ui.printColoredLine("🏆 Tournoi avec " + selectedHero.getName(), TextColor.ANSI.CYAN);
+            ui.printLine("");
+            ui.printColoredLine("Appuyez sur une touche pour commencer...", TextColor.ANSI.YELLOW);
+            ui.waitForKeyPress();
+
+            combatManager.startTournament((Chevalier) selectedHero, enemies);
+        } else {
+            ui.clearScreen();
+            ui.printColoredLine("❌ Le personnage sélectionné ne peut pas participer au tournoi.", TextColor.ANSI.RED);
+            ui.printColoredLine("Seuls les Chevaliers peuvent participer pour l'instant.", TextColor.ANSI.YELLOW);
+            ui.printLine("");
+            ui.printColoredLine("Appuyez sur une touche pour continuer...", TextColor.ANSI.CYAN);
+            ui.waitForKeyPress();
+        }
+    }
 
     public static void main(String[] args) {
         try {
             // Initialisation de l'interface utilisateur
             ui.initialize();
 
-            // Création des personnages
-            Chevalier knight1 = new Chevalier("Gustave", 999, 32, 45, 45, 57, true);
-
-            Chevalier knight2 = new Chevalier();
-            knight2.setName("Simon");
-            knight2.setStat(Stat.HP, 99);
-            knight2.setStat(Stat.DEFENSE, 32);
-            knight2.setStat(Stat.ATTAQUE, 85);
-            knight2.setStat(Stat.SPEED, 60);
-            knight2.setStat(Stat.LUCK, 57);
-
-            Chevalier[] knightTab = {new Chevalier("Jordy"), new Chevalier("Johan")};
-
-            // Code pour d'autres personnages (optionnel)
-            Personnage[] ennemies = {new Ennemi("Joepoknoob77"), new Gobelin("Jordy"), new Gobelin("Kaiizerrr")};
-            List<Personnage> equipe = new ArrayList<>();
-            equipe.add(new Chevalier("Maelle"));
-            equipe.add(new Gobelin("Frantz"));
-
-            // Ajout d'objets à l'inventaire
-            knight1.addItem("Pistolet", 1);
-            knight1.addItem("Arbre", 1);
-            knight1.addItem("Zebre", 1);
+            // Initialisation des personnages et de l'équipe
+            initializeCharacters();
 
             // === ÉCRAN DE TITRE ===
             ui.showTitleScreen();
@@ -57,11 +114,11 @@ public class rpg_main {
 
                 switch (menuChoice) {
                     case 1: // Rejoindre le tournoi
-                        combatManager.startTournament(knight1, ennemies);
+                        startTournamentWithTeam();
                         break;
 
-                    case 2: // Equipe
-                        ui.showNotImplemented("Equipe");
+                    case 2: // Équipe
+                        teamManager.showTeamManagementMenu();
                         break;
 
                     case 3: // Personnalisation
