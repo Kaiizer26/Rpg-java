@@ -14,7 +14,6 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Classe responsable de l'interface utilisateur avec Lanterna
- * Centralise toutes les méthodes d'affichage et d'interaction
  */
 public class TerminalUI implements ITerminalUI {
     private Terminal terminal;

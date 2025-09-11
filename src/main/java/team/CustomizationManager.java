@@ -197,9 +197,7 @@ public class CustomizationManager implements ICustomizationManager {
         }
     }
 
-    /**
-     * Modifier une stat spécifique
-     */
+
     /**
      * Modifier une stat spécifique en respectant les points disponibles
      */

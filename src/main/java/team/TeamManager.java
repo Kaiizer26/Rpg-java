@@ -24,7 +24,6 @@ public class TeamManager implements ITeamManager{
         this.activeTeam = new ArrayList<>();
     }
 
-    // Méthodes de base inchangées...
     public void addToCollection(Ally personnage) {
         if (!collection.contains(personnage)) {
             collection.add(personnage);
@@ -49,12 +48,11 @@ public class TeamManager implements ITeamManager{
         return activeTeam.size() >= MAX_TEAM_SIZE;
     }
 
-    // NOUVELLE MÉTHODE pour la boutique
+    // MÉTHODE pour la boutique
     public int getCollectionSize() {
         return collection.size();
     }
 
-    // CORRECTION : Retourner le bon type
     public List<Ally> getCollection() {
         return new ArrayList<>(collection);
     }

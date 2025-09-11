@@ -21,15 +21,12 @@ public abstract class Personnage implements IPersonnage {
 
     private int maxHP;
 
-    // NOUVEAU : Système de niveau et expérience
+    // Système de niveau et expérience
     private int baseStatPoints;
 
     private int level;
     private int experience;
     private int experienceToNextLevel;
-
-    // SUPPRIMÉ : inventory individuel (maintenant géré globalement)
-    // private Map<String, Integer> inventory;
 
     public Personnage(){
         this.name = "Bot";
@@ -70,10 +67,8 @@ public abstract class Personnage implements IPersonnage {
         stats.put(Stat.SPEED, speed);
         stats.put(Stat.LUCK, luck);
 
-        // CORRECTION: maxHP défini APRÈS avoir mis les stats dans la map
         this.maxHP = hp;
 
-        // Initialisation du système de niveau
         this.level = 1; // Commencer au niveau 1
         this.experience = 0;
         this.experienceToNextLevel = 100;
@@ -114,11 +109,10 @@ public abstract class Personnage implements IPersonnage {
         if (pointsDifference <= availablePoints) {
             stats.put(stat, value);
 
-            // NOUVEAU: Si on modifie les HP, mettre à jour maxHP
+            //Si on modifie les HP, mettre à jour maxHP
             if (stat == Stat.HP) {
                 this.maxHP = value;
                 // S'assurer que les HP actuels ne dépassent pas les nouveaux maxHP
-                // (au cas où on diminuerait les HP max)
                 if (getStat(Stat.HP) > maxHP) {
                     stats.put(Stat.HP, maxHP);
                 }
@@ -156,7 +150,7 @@ public abstract class Personnage implements IPersonnage {
         this.start = start;
     }
 
-    // NOUVEAU : Méthodes pour le système de niveau/expérience
+    // Méthodes pour le système de niveau/expérience
     public int getLevel() {
         return level;
     }
@@ -200,7 +194,7 @@ public abstract class Personnage implements IPersonnage {
     /**
      * Calcule le nombre de points disponibles pour améliorer les stats
      * Basé sur le niveau actuel du personnage moins les points déjà dépensés
-     * @return le nombre de points disponibles (peut être négatif si les stats dépassent le niveau)
+     * return le nombre de points disponibles (peut être négatif si les stats dépassent le niveau)
      */
     // Méthode pour calculer les points disponibles
     public int getAvailablePoints() {

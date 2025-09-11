@@ -32,16 +32,9 @@ public class rpg_main {
      */
     private static void initializeCharacters()  {
         // Création des personnages principaux
-        Knight knight1 = new Knight("Gustave", 99, 32, 45, 45, 57);
-        Knight knight2 = new Knight();
-        knight2.setName("Simon");
-        knight2.setStat(Stat.HP, 99);
-        knight2.setStat(Stat.DEFENSE, 32);
-        knight2.setStat(Stat.ATTAQUE, 85);
-        knight2.setStat(Stat.SPEED, 60);
-        knight2.setStat(Stat.LUCK, 57);
+        Knight knight1 = new Knight("Gustave");
+        Knight knight2 = new Knight("Simon");
 
-        // Donner de l'or initial au joueur
         globalInventory.addGold(500); // Or de départ
 
         // Ajout d'objets à l'inventaire global
@@ -54,7 +47,7 @@ public class rpg_main {
         Knight maelle = new Knight("Maelle");
         Knight kaiizer = new Knight("Kaiizerrr");
 
-        // Ajout de tous les personnages à la collection
+        // Personnages de départ dans la collection
         teamManager.addToCollection(knight1);
         teamManager.addToCollection(knight2);
         teamManager.addToCollection(jordy);
@@ -138,7 +131,7 @@ public class rpg_main {
                 new Knight("Champion de l'Arène", 120, 30, 45, 25, 20)
         };
 
-        // NOUVEAU : Utiliser le système de combat en équipe
+        // Utiliser le système de combat en équipe
         boolean tournamentWon = combatManager.startTeamTournament(activeTeam, enemies);
 
         // Après le tournoi, donner de l'expérience aux survivants ET de l'or si victoire
@@ -170,7 +163,7 @@ public class rpg_main {
     }
 
     /**
-     * NOUVELLE MÉTHODE : Combat d'entraînement contre un seul ennemi
+     * Combat d'entraînement contre un seul ennemi
      */
     private static void startTrainingCombat() throws IOException, InterruptedException {
         List<Ally> activeTeam = teamManager.getActiveTeam();
@@ -233,7 +226,7 @@ public class rpg_main {
             boolean won = combatManager.startTeamVsEnemyCombat(activeTeam, enemy);
 
             // Donner de l'expérience et de l'or après le combat d'entraînement
-            int expGain = 25; // Moins d'exp qu'un tournoi
+            int expGain = 25;
             for (Ally ally : activeTeam) {
                 if (ally.getStat(Stat.HP) > 0) {
                     ally.addExperience(expGain);
@@ -254,7 +247,7 @@ public class rpg_main {
     }
 
     /**
-     * NOUVELLE MÉTHODE : Afficher des informations de debug/développement
+     * Afficher des informations de debug/développement
      */
     private static void showDebugInfo() throws IOException {
         ui.clearScreen();
@@ -286,7 +279,7 @@ public class rpg_main {
     }
 
     /**
-     * NOUVEAU : Menu de combat avec plusieurs options
+     * Menu de combat avec plusieurs options
      */
     private static void showCombatMenu() throws IOException, InterruptedException {
         boolean continueCombat = true;

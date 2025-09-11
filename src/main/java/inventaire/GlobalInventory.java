@@ -9,11 +9,11 @@ import java.util.*;
  */
 public class GlobalInventory implements IGlobalInventory{
     private Map<String, Integer> items;
-    private int gold; // Nouvelle propriété pour l'or
+    private int gold;
 
     public GlobalInventory() {
         this.items = new TreeMap<>(); // TreeMap pour garder les items triés
-        this.gold = 0; // Commencer sans or
+        this.gold = 0;
     }
 
     // ========== MÉTHODES POUR LES ITEMS ==========
@@ -116,8 +116,8 @@ public class GlobalInventory implements IGlobalInventory{
 
     /**
      * Dépenser de l'or
-     * @param amount Montant à dépenser
-     * @return true si la transaction a réussi, false si pas assez d'or
+     * amount Montant à dépenser
+     * return true si la transaction a réussi, false si pas assez d'or
      */
     public boolean spendGold(int amount) {
         if (amount <= 0) return false;

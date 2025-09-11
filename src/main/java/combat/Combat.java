@@ -25,16 +25,6 @@ public class Combat implements ICombat{
     private GlobalInventory globalInventory;
 
     /**
-     * Constructeur
-     */
-    public Combat(TerminalUI ui) {
-        this.ui = ui;
-        this.globalInventory = new GlobalInventory();
-
-    }
-
-
-    /**
      * Constructeur avec inventaire global
      */
     public Combat(TerminalUI ui, GlobalInventory globalInventory) {
@@ -85,28 +75,6 @@ public class Combat implements ICombat{
     }
 
     /**
-     * Vérifie s'il reste des ennemis vivants
-     */
-    private boolean hasAliveEnemies(Personnage[] enemies) {
-        for (Personnage enemy : enemies) {
-            if (enemy.getStat(Stat.HP) > 0) return true;
-        }
-        return false;
-    }
-
-    /**
-     * Trouve le prochain ennemi vivant
-     */
-    private Personnage getNextAliveEnemy(Personnage[] enemies, int currentIndex) {
-        for (int i = currentIndex + 1; i < enemies.length; i++) {
-            if (enemies[i].getStat(Stat.HP) > 0) {
-                return enemies[i];
-            }
-        }
-        return null; // Aucun ennemi vivant trouvé
-    }
-
-    /**
      * Gère le changement d'allié quand l'actuel tombe
      */
     private Ally handleAllySwitch(List<Ally> team, int currentIndex) throws IOException, InterruptedException {
@@ -128,7 +96,7 @@ public class Combat implements ICombat{
     }
 
     /**
-     * NOUVELLE MÉTHODE : Gère l'utilisation d'objets en combat
+     * Gère l'utilisation d'objets en combat
      */
     private boolean handleItemUsage(Ally player) throws IOException, InterruptedException {
         if (globalInventory == null) {
@@ -178,23 +146,18 @@ public class Combat implements ICombat{
     }
 
     /**
-     * NOUVELLE MÉTHODE : Utilise une potion de soin sur l'allié
+     * Utilise une potion de soin sur l'allié
      */
     private boolean useHealingPotion(Ally player) throws IOException, InterruptedException {
-        // Vérifier qu'il y a bien des potions
+        // Vérifie qu'il y a bien des potions
         if (globalInventory.getItemQuantity("Potion de soin") <= 0) {
             ui.printColoredLine("❌ Aucune potion de soin disponible !", TextColor.ANSI.RED);
             Thread.sleep(1500);
             return false;
         }
 
-        // CORRECTION: Utiliser les bonnes méthodes pour les HP
         int currentHP = player.getStat(Stat.HP);
-        int maxHP = player.getMaxHP(); // Cette méthode retourne maintenant maxHP stocké
-
-        // DEBUG: Afficher les valeurs pour vérifier
-        ui.printColoredLine("DEBUG - HP actuels: " + currentHP, TextColor.ANSI.CYAN);
-        ui.printColoredLine("DEBUG - HP maximum: " + maxHP, TextColor.ANSI.CYAN);
+        int maxHP = player.getMaxHP();
 
         // Si déjà pleine vie
         if (currentHP >= maxHP) {
@@ -211,11 +174,9 @@ public class Combat implements ICombat{
         int newHP = Math.min(currentHP + healAmount, maxHP);
         int actualHeal = newHP - currentHP;
 
-        // CORRECTION: Utiliser la méthode healBy() au lieu de setStat()
         player.healBy(actualHeal);
         globalInventory.removeItem("Potion de soin", 1);
 
-        // Animation d'utilisation
         ui.clearScreen();
         ui.animatedText("🧪 " + player.getName() + " utilise une Potion de soin !", TextColor.ANSI.GREEN, 50);
         ui.animatedText("✨ +" + actualHeal + " HP récupérés !", TextColor.ANSI.MAGENTA, 30);
@@ -231,8 +192,8 @@ public class Combat implements ICombat{
 
 
     /**
-     * Gère le tour de combat d'un joueur (MODIFIÉ pour inclure les objets)
-     * @return true si le combat continue, false si le joueur fuit
+     * Gère le tour de combat d'un joueur
+     * return true si le combat continue, false si le joueur fuit
      */
     private boolean handlePlayerTurn(Ally player, Personnage enemy) throws IOException, InterruptedException {
         ui.printColoredLine("🗡 Tour de " + player.getName(), TextColor.ANSI.CYAN);
@@ -285,7 +246,7 @@ public class Combat implements ICombat{
         Thread.sleep(1500);
 
         // === SYSTÈME DE DODGE INTERACTIF ===
-        boolean playerDodged = ui.showDodgeQTE(); // ou showDodgeQTEWithRandomSymbol()
+        boolean playerDodged = ui.showDodgeQTE();
 
         if (playerDodged) {
             // Le joueur a esquivé avec succès
@@ -311,7 +272,7 @@ public class Combat implements ICombat{
 
     /**
      * Gère un combat entre l'équipe du joueur et un ennemi
-     * @return true si l'équipe a gagné, false si elle a perdu ou fui
+     * return true si l'équipe a gagné, false si elle a perdu ou fui
      */
     private boolean handleTeamVsEnemyCombat(List<Ally> team, Personnage enemy) throws IOException, InterruptedException {
         if (team.isEmpty() || !hasAliveAllies(team)) {
@@ -396,8 +357,8 @@ public class Combat implements ICombat{
 
     /**
      * Lance le mode tournoi avec une équipe contre plusieurs ennemis
-     * @param team L'équipe du joueur
-     * @param enemies Tableau des ennemis à affronter
+     * team L'équipe du joueur
+     * enemies Tableau des ennemis à affronter
      */
     public boolean startTeamTournament(List<Ally> team, Personnage[] enemies) throws IOException, InterruptedException {
         if (team.isEmpty()) {
@@ -467,15 +428,15 @@ public class Combat implements ICombat{
             ui.showCombatEnd(false, "💀 Votre équipe a été éliminée du tournoi...");
         }
 
-        return teamWon; // ← IMPORTANT : retourne le résultat final
+        return teamWon;
     }
 
 
     /**
      * Lance un combat simple entre une équipe et un ennemi
-     * @param team L'équipe du joueur
-     * @param enemy L'ennemi à affronter
-     * @return true si l'équipe a gagné, false sinon
+     * team L'équipe du joueur
+     * enemy L'ennemi à affronter
+     * return true si l'équipe a gagné, false sinon
      */
     public boolean startTeamVsEnemyCombat(List<Ally> team, Personnage enemy) throws IOException, InterruptedException {
         ui.showCombatStart();
