@@ -27,20 +27,20 @@ public class rpg_main {
         }
     }
 
-    /**
-     * Vérifie s'il reste des ennemis vivants
-     */
-    public static boolean hasAliveEnemies(Chevalier[] enemies) {
-        for (Chevalier enemy : enemies) {
-            if (enemy.getStat(Stat.HP) > 0) return true;
-        }
-        return false;
-    }
+//    /**
+//     * Vérifie s'il reste des ennemis vivants
+//     */
+//    public static boolean hasAliveEnemies(Chevalier[] enemies) {
+//        for (Chevalier enemy : enemies) {
+//            if (enemy.getStat(Stat.HP) > 0) return true;
+//        }
+//        return false;
+//    }
 
     /**
      * Gère le tour de combat d'un joueur
      */
-    private static boolean handlePlayerTurn(Chevalier player, Chevalier enemy) throws IOException, InterruptedException {
+    private static boolean handlePlayerTurn(Personnage player, Personnage enemy) throws IOException, InterruptedException {
         ui.printColoredLine("🗡 Tour de " + player.getName(), TextColor.ANSI.CYAN);
 
         String[] options = {"Attaquer", "Fuir"};
@@ -58,8 +58,8 @@ public class rpg_main {
             }
             return true; // Continue le combat
         } else if (choice == 2) {
-            ui.animatedText("🏃 " + player.getName() + " prend la fuite !", TextColor.ANSI.YELLOW, 50);
-            return false; // Fuit le combat
+            ui.animatedText("🏃 " + player.getName() + " abandonne !", TextColor.ANSI.YELLOW, 50);
+            return false; // Abandonne le combat
         }
         return true;
     }
@@ -86,8 +86,43 @@ public class rpg_main {
     }
 
     /**
-     * Gère un combat complet entre le joueur et un ennemi
+     * Lance le mode tournoi (combat contre ennemis)
      */
+    private static void startTournament(Chevalier player, Chevalier[] enemies) throws IOException, InterruptedException {
+        // Affichage du héros du joueur
+        ui.showPlayerHeroSection(player);
+
+        // Affichage des adversaires
+        ui.showAdversariesSection(enemies);
+
+        // Début du combat
+        ui.showCombatStart();
+
+        // === BOUCLE DE COMBAT PRINCIPALE ===
+        boolean playerAlive = true;
+
+        for (int i = 0; i < enemies.length && playerAlive; i++) {
+            boolean wonFight = handleSingleCombat(player, enemies[i]);
+
+            if (!wonFight) {
+                playerAlive = false;
+                break;
+            }
+
+            if (player.getStat(Stat.HP) <= 0) {
+                playerAlive = false;
+                break;
+            }
+        }
+
+        // === FIN DU TOURNOI ===
+        boolean playerWon = player.getStat(Stat.HP) > 0 && playerAlive;
+        if (playerWon) {
+            ui.showCombatEnd(true, "🏆 Vous avez remporté le tournoi ! " + player.EndCombatMessage());
+        } else {
+            ui.showCombatEnd(false, "💀 Vous avez été éliminé du tournoi... " + player.EndCombatMessage());
+        }
+    }
     private static boolean handleSingleCombat(Chevalier player, Chevalier enemy) throws IOException, InterruptedException {
         // Déterminer qui commence
         firstToAttack(player, enemy);
@@ -102,7 +137,7 @@ public class rpg_main {
             if (player.isStart()) {
                 boolean continuesCombat = handlePlayerTurn(player, enemy);
                 if (!continuesCombat) {
-                    return false; // Joueur a fui
+                    return false; // Joueur a abandonné
                 }
                 Thread.sleep(2000);
             }
@@ -150,40 +185,44 @@ public class rpg_main {
             knight1.addItem("Arbre", 1);
             knight1.addItem("Zebre", 1);
 
-            // === ÉCRANS DU JEU ===
-
-            // Écran de titre
+            // === ÉCRAN DE TITRE ===
             ui.showTitleScreen();
 
-            // Affichage du héros du joueur
-            ui.showPlayerHeroSection(knight1);
+            // === BOUCLE PRINCIPALE DU JEU ===
+            boolean continueGame = true;
 
-            // Affichage des adversaires
-            ui.showAdversariesSection(knightTab);
+            while (continueGame) {
+                int menuChoice = ui.showMainMenu();
 
-            // Début du combat
-            ui.showCombatStart();
+                switch (menuChoice) {
+                    case 1: // Rejoindre le tournoi
+                        startTournament(knight1, knightTab);
+                        break;
 
-            // === BOUCLE DE COMBAT PRINCIPALE ===
-            boolean playerAlive = true;
+                    case 2: // Equipe
+                        ui.showNotImplemented("Equipe");
+                        break;
 
-            for (int i = 0; i < knightTab.length && playerAlive; i++) {
-                boolean wonFight = handleSingleCombat(knight1, knightTab[i]);
+                    case 3: // Personnalisation
+                        ui.showNotImplemented("Personnalisation");
+                        break;
 
-                if (!wonFight) {
-                    playerAlive = false;
-                    break;
-                }
+                    case 4: // Boutique
+                        ui.showNotImplemented("Boutique");
+                        break;
 
-                if (knight1.getStat(Stat.HP) <= 0) {
-                    playerAlive = false;
-                    break;
+                    case 5: // Quitter le jeu
+                        ui.clearScreen();
+                        ui.animatedText("🌙 Merci d'avoir joué ! À bientôt ! 🌙", TextColor.ANSI.MAGENTA, 50);
+                        Thread.sleep(1500);
+                        continueGame = false;
+                        break;
+
+                    default:
+                        ui.printColoredLine("Choix invalide, veuillez réessayer.", TextColor.ANSI.RED);
+                        break;
                 }
             }
-
-            // === FIN DU JEU ===
-            boolean playerWon = knight1.getStat(Stat.HP) > 0;
-            ui.showCombatEnd(playerWon, knight1.EndCombatMessage());
 
         } catch (IOException | InterruptedException e) {
             System.err.println("Erreur durant l'exécution du jeu : " + e.getMessage());

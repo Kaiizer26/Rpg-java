@@ -39,6 +39,78 @@ public class TerminalUI {
     }
 
     /**
+     * Affiche un message pour les fonctionnalités non implémentées
+     */
+    public void showNotImplemented(String feature) throws IOException {
+        clearScreen();
+        printColoredLine("╔════════════════════════════════════════════════╗", TextColor.ANSI.YELLOW);
+        printColoredLine("║              🚧 EN CONSTRUCTION 🚧             ║", TextColor.ANSI.YELLOW);
+        printColoredLine("╚════════════════════════════════════════════════╝", TextColor.ANSI.YELLOW);
+        printLine("");
+        printColoredLine("La fonctionnalité \"" + feature + "\" n'est pas encore implémentée.", TextColor.ANSI.YELLOW);
+        printLine("");
+        printColoredLine("Appuyez sur une touche pour revenir au menu principal...", TextColor.ANSI.CYAN);
+        try {
+            waitForKeyPress();
+        } catch (IOException e) {
+            // Ignorer l'erreur
+        }
+    }
+
+    /**
+     * Affiche le menu principal du jeu et retourne le choix de l'utilisateur
+     */
+    /**
+     * Affiche le menu principal du jeu et retourne le choix de l'utilisateur
+     */
+    public int showMainMenu() throws IOException {
+        clearScreen();
+
+        // Titre du menu principal
+        printLine("");
+        printColoredLine("╔══════════════════════════════════════╗", TextColor.ANSI.CYAN);
+        printColoredLine("║           MENU PRINCIPAL             ║", TextColor.ANSI.CYAN);
+        printColoredLine("╚══════════════════════════════════════╝", TextColor.ANSI.CYAN);
+        printLine("");
+
+        // Options du menu
+        String[] menuOptions = {
+                "🏆 Rejoindre le tournoi",
+                "👥 Équipe",
+                "🎨 Personnalisation",
+                "🛒 Boutique",
+                "🚪 Quitter le jeu"
+        };
+
+        // Affichage des options
+        for (int i = 0; i < menuOptions.length; i++) {
+            printColoredText((i + 1) + " - ", TextColor.ANSI.YELLOW);
+            printLine(menuOptions[i]);
+        }
+
+        printLine("");
+        printColoredText("Votre choix (1-5) : ", TextColor.ANSI.GREEN);
+
+        // Vider le buffer des touches en attente avant de lire le choix
+        clearInputBuffer();
+
+        // Lecture du choix utilisateur
+        while (true) {
+            KeyStroke key = waitForKeyPress();
+            if (key.getKeyType() == KeyType.Character) {
+                char c = key.getCharacter();
+                if (c >= '1' && c <= '5') {
+                    terminal.putCharacter(c);
+                    terminal.putCharacter('\n');
+                    terminal.flush();
+                    return c - '0'; // Convertit le caractère en nombre
+                }
+            }
+            // Si choix invalide, on continue la boucle
+            printColoredText("\nChoix invalide. Choisissez entre 1 et 5 : ", TextColor.ANSI.RED);
+        }
+    }
+    /**
      * Nettoie et ferme le terminal proprement
      */
     public void cleanup() throws IOException {
@@ -97,6 +169,9 @@ public class TerminalUI {
     /**
      * Affiche un menu et retourne le choix de l'utilisateur
      */
+    /**
+     * Affiche un menu et retourne le choix de l'utilisateur
+     */
     public int showMenu(String[] options, String prompt) throws IOException {
         printColoredLine(prompt, TextColor.ANSI.CYAN);
 
@@ -105,6 +180,9 @@ public class TerminalUI {
         }
 
         printColoredText("Votre choix : ", TextColor.ANSI.YELLOW);
+
+        // Vider le buffer avant de lire le choix
+        clearInputBuffer();
 
         while (true) {
             KeyStroke key = waitForKeyPress();
@@ -117,9 +195,20 @@ public class TerminalUI {
                     return c - '0';
                 }
             }
+            // Si choix invalide, on continue la boucle sans message d'erreur
+            // car cela pourrait créer de la confusion dans l'interface
         }
     }
 
+    /**
+     * Vide le buffer des touches en attente pour éviter les saisies indésirables
+     */
+    private void clearInputBuffer() throws IOException {
+        // Continue à lire tant qu'il y a des touches en attente
+        while (terminal.pollInput() != null) {
+            // Vide le buffer en lisant toutes les touches en attente
+        }
+    }
     /**
      * Affiche les statistiques d'un personnage de manière stylisée
      */
@@ -193,8 +282,8 @@ public class TerminalUI {
     public void showTitleScreen() throws IOException, InterruptedException {
         clearScreen();
         animatedText("╔══════════════════════════════════════╗", TextColor.ANSI.MAGENTA, 20);
-        animatedText("║              Tower 33                ║", TextColor.ANSI.MAGENTA, 20);
-        animatedText("║      Inspiré de Clair Obscur 33      ║", TextColor.ANSI.MAGENTA, 20);
+        animatedText("║          RPG TEXTUEL v1.0            ║", TextColor.ANSI.MAGENTA, 20);
+        animatedText("║     Inspiré de Clair Obscur 33      ║", TextColor.ANSI.MAGENTA, 20);
         animatedText("╚══════════════════════════════════════╝", TextColor.ANSI.MAGENTA, 20);
 
         printLine("");
