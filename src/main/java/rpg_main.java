@@ -3,21 +3,20 @@ import personnage.Ennemi;
 import personnage.Gobelin;
 import personnage.Personnage;
 import stats.Stat;
-
+import ui.TerminalUI;
 import com.googlecode.lanterna.TextColor;
-import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
-import com.googlecode.lanterna.terminal.Terminal;
-import com.googlecode.lanterna.input.KeyStroke;
-import com.googlecode.lanterna.input.KeyType;
-import com.googlecode.lanterna.TerminalSize;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class rpg_main {
-    private static Terminal terminal;
+    // Instance de l'interface utilisateur
+    private static TerminalUI ui = new TerminalUI();
 
+    /**
+     * Détermine qui attaque en premier selon la vitesse
+     */
     public static void firstToAttack(Chevalier knight1, Chevalier knight2) {
         if (knight1.getStat(Stat.SPEED) >= knight2.getStat(Stat.SPEED)) {
             knight1.setStart(true);
@@ -28,6 +27,9 @@ public class rpg_main {
         }
     }
 
+    /**
+     * Vérifie s'il reste des ennemis vivants
+     */
     public static boolean hasAliveEnemies(Chevalier[] enemies) {
         for (Chevalier enemy : enemies) {
             if (enemy.getStat(Stat.HP) > 0) return true;
@@ -35,146 +37,94 @@ public class rpg_main {
         return false;
     }
 
-    // Méthode pour initialiser le terminal
-    private static void initializeTerminal() throws IOException {
-        DefaultTerminalFactory terminalFactory = new DefaultTerminalFactory();
-        terminal = terminalFactory.createTerminal();
-        terminal.enterPrivateMode();
-        terminal.clearScreen();
-        terminal.setCursorVisible(false);
-    }
+    /**
+     * Gère le tour de combat d'un joueur
+     */
+    private static boolean handlePlayerTurn(Chevalier player, Chevalier enemy) throws IOException, InterruptedException {
+        ui.printColoredLine("🗡 Tour de " + player.getName(), TextColor.ANSI.CYAN);
 
-    // Méthode pour nettoyer et fermer le terminal
-    private static void cleanupTerminal() throws IOException {
-        terminal.exitPrivateMode();
-        terminal.close();
-    }
+        String[] options = {"Attaquer", "Fuir"};
+        int choice = ui.showMenu(options, "Que voulez-vous faire ?");
 
-    // Méthode pour effacer l'écran et repositionner le curseur
-    private static void clearScreen() throws IOException {
-        terminal.clearScreen();
-        terminal.setCursorPosition(0, 0);
-    }
+        if (choice == 1) {
+            ui.animatedText("⚔ " + player.getName() + " attaque !", TextColor.ANSI.YELLOW, 30);
+            player.performAttack(enemy);
 
-    // Méthode pour afficher du texte avec couleur
-    private static void printColoredText(String text, TextColor color) throws IOException {
-        terminal.setForegroundColor(color);
-        for (char c : text.toCharArray()) {
-            terminal.putCharacter(c);
-        }
-        terminal.resetColorAndSGR();
-        terminal.flush();
-    }
-
-    // Méthode pour afficher du texte et aller à la ligne
-    private static void printLine(String text) throws IOException {
-        printColoredText(text, TextColor.ANSI.WHITE);
-        terminal.putCharacter('\n');
-        terminal.flush();
-    }
-
-    // Méthode pour afficher du texte coloré et aller à la ligne
-    private static void printColoredLine(String text, TextColor color) throws IOException {
-        printColoredText(text, color);
-        terminal.putCharacter('\n');
-        terminal.flush();
-    }
-
-    // Méthode pour attendre une entrée utilisateur (touche)
-    private static KeyStroke waitForKeyPress() throws IOException {
-        terminal.flush();
-        return terminal.readInput();
-    }
-
-    // Méthode pour afficher un menu et récupérer le choix
-    private static int showMenu(String[] options, String prompt) throws IOException {
-        printColoredLine(prompt, TextColor.ANSI.CYAN);
-
-        for (int i = 0; i < options.length; i++) {
-            printLine((i + 1) + " - " + options[i]);
-        }
-
-        printColoredText("Votre choix : ", TextColor.ANSI.YELLOW);
-
-        while (true) {
-            KeyStroke key = waitForKeyPress();
-            if (key.getKeyType() == KeyType.Character) {
-                char c = key.getCharacter();
-                if (c >= '1' && c <= '0' + options.length) {
-                    terminal.putCharacter(c);
-                    terminal.putCharacter('\n');
-                    terminal.flush();
-                    return c - '0';
-                }
+            if (enemy.getStat(Stat.HP) > 0) {
+                ui.printColoredText("💔 ", TextColor.ANSI.RED);
+                ui.printLine(enemy.getName() + " a maintenant " + enemy.getStat(Stat.HP) + " HP");
+            } else {
+                ui.animatedText("💀 " + enemy.getName() + " est vaincu !", TextColor.ANSI.GREEN, 50);
             }
+            return true; // Continue le combat
+        } else if (choice == 2) {
+            ui.animatedText("🏃 " + player.getName() + " prend la fuite !", TextColor.ANSI.YELLOW, 50);
+            return false; // Fuit le combat
+        }
+        return true;
+    }
+
+    /**
+     * Gère le tour de combat d'un ennemi
+     */
+    private static void handleEnemyTurn(Chevalier enemy, Chevalier player) throws IOException, InterruptedException {
+        ui.displayCombatStatus(player, enemy);
+
+        ui.printColoredLine("💀 Tour de " + enemy.getName(), TextColor.ANSI.RED);
+        ui.printColoredLine("L'ennemi réfléchit...", TextColor.ANSI.RED);
+        Thread.sleep(1500);
+
+        ui.animatedText("💥 " + enemy.getName() + " attaque !", TextColor.ANSI.RED, 30);
+        enemy.performAttack(player);
+
+        if (player.getStat(Stat.HP) > 0) {
+            ui.printColoredText("💔 ", TextColor.ANSI.RED);
+            ui.printLine(player.getName() + " a maintenant " + player.getStat(Stat.HP) + " HP");
+        } else {
+            ui.animatedText("💀 " + player.getName() + " est vaincu !", TextColor.ANSI.RED, 50);
         }
     }
 
-    // Méthode pour afficher les stats d'un personnage avec style
-    private static void displayCharacterStats(Chevalier character, TextColor nameColor) throws IOException {
-        printColoredLine("═══════════════════════════════════════", TextColor.ANSI.BLUE);
-        printColoredText("⚔ ", TextColor.ANSI.YELLOW);
-        printColoredLine(character.getName().toUpperCase(), nameColor);
-        printColoredLine("═══════════════════════════════════════", TextColor.ANSI.BLUE);
+    /**
+     * Gère un combat complet entre le joueur et un ennemi
+     */
+    private static boolean handleSingleCombat(Chevalier player, Chevalier enemy) throws IOException, InterruptedException {
+        // Déterminer qui commence
+        firstToAttack(player, enemy);
 
-        printColoredText("❤ HP: ", TextColor.ANSI.RED);
-        printLine(character.getStat(Stat.HP) + "");
+        ui.printLine("");
+        ui.animatedText("🎯 Adversaire: " + enemy.getName(), TextColor.ANSI.RED, 30);
+        Thread.sleep(1500);
 
-        printColoredText("⚔ ATK: ", TextColor.ANSI.RED);
-        printLine(character.getStat(Stat.ATTAQUE) + "");
+        while (player.getStat(Stat.HP) > 0 && enemy.getStat(Stat.HP) > 0) {
+            ui.displayCombatStatus(player, enemy);
 
-        printColoredText("🛡 DEF: ", TextColor.ANSI.BLUE);
-        printLine(character.getStat(Stat.DEFENSE) + "");
+            if (player.isStart()) {
+                boolean continuesCombat = handlePlayerTurn(player, enemy);
+                if (!continuesCombat) {
+                    return false; // Joueur a fui
+                }
+                Thread.sleep(2000);
+            }
 
-        printColoredText("💨 SPD: ", TextColor.ANSI.GREEN);
-        printLine(character.getStat(Stat.SPEED) + "");
+            if (enemy.getStat(Stat.HP) > 0) {
+                handleEnemyTurn(enemy, player);
+                Thread.sleep(2000);
+            }
 
-        printColoredText("🍀 LUCK: ", TextColor.ANSI.MAGENTA);
-        printLine(character.getStat(Stat.LUCK) + "");
-
-        printLine("");
-    }
-
-    // Animation de texte avec délai
-    private static void animatedText(String text, TextColor color, int delayMs) throws IOException, InterruptedException {
-        terminal.setForegroundColor(color);
-        for (char c : text.toCharArray()) {
-            terminal.putCharacter(c);
-            terminal.flush();
-            Thread.sleep(delayMs);
+            // Alternance des tours
+            boolean temp = player.isStart();
+            player.setStart(enemy.isStart());
+            enemy.setStart(temp);
         }
-        terminal.resetColorAndSGR();
-        terminal.putCharacter('\n');
-        terminal.flush();
+
+        return player.getStat(Stat.HP) > 0; // true si le joueur a gagné
     }
 
-    // Méthode pour afficher l'état du combat
-    private static void displayCombatStatus(Chevalier player, Chevalier enemy) throws IOException {
-        clearScreen();
-
-        printColoredLine("⚔═══════════ COMBAT ═══════════⚔", TextColor.ANSI.RED);
-        printLine("");
-
-        // Affichage du joueur (à gauche)
-        printColoredText("🛡 ", TextColor.ANSI.BLUE);
-        printColoredText(player.getName() + " ", TextColor.ANSI.CYAN);
-        printColoredText("❤" + player.getStat(Stat.HP), TextColor.ANSI.RED);
-
-        printColoredText("        VS        ", TextColor.ANSI.YELLOW);
-
-        // Affichage de l'ennemi (à droite)
-        printColoredText("💀 ", TextColor.ANSI.RED);
-        printColoredText(enemy.getName() + " ", TextColor.ANSI.RED);
-        printColoredText("❤" + enemy.getStat(Stat.HP), TextColor.ANSI.RED);
-
-        printLine("");
-        printLine("");
-    }
-
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) {
         try {
-            // Initialisation de Lanterna
-            initializeTerminal();
+            // Initialisation de l'interface utilisateur
+            ui.initialize();
 
             // Création des personnages
             Chevalier knight1 = new Chevalier("Gustave", 999, 32, 45, 45, 57, true);
@@ -188,142 +138,62 @@ public class rpg_main {
             knight2.setStat(Stat.LUCK, 57);
 
             Chevalier[] knightTab = {new Chevalier("Jordy"), new Chevalier("Johan")};
-            Personnage[] persos = {new Ennemi("Joepoknoob77"), new Gobelin("Jordy"), new Chevalier("Kaiizerrr")};
 
-            // Inventaire, collection
+            // Code pour d'autres personnages (optionnel)
+            Personnage[] persos = {new Ennemi("Joepoknoob77"), new Gobelin("Jordy"), new Chevalier("Kaiizerrr")};
             List<Personnage> equipe = new ArrayList<>();
             equipe.add(new Chevalier("Maelle"));
             equipe.add(new Gobelin("Frantz"));
 
+            // Ajout d'objets à l'inventaire
             knight1.addItem("Pistolet", 1);
             knight1.addItem("Arbre", 1);
             knight1.addItem("Zebre", 1);
 
+            // === ÉCRANS DU JEU ===
+
             // Écran de titre
-            clearScreen();
-            animatedText("╔══════════════════════════════════════╗", TextColor.ANSI.MAGENTA, 20);
-            animatedText("║          RPG TEXTUEL v1.0            ║", TextColor.ANSI.MAGENTA, 20);
-            animatedText("║     Inspiré de Clair Obscur 33      ║", TextColor.ANSI.MAGENTA, 20);
-            animatedText("╚══════════════════════════════════════╝", TextColor.ANSI.MAGENTA, 20);
+            ui.showTitleScreen();
 
-            printLine("");
-            printColoredLine("Appuyez sur une touche pour commencer...", TextColor.ANSI.CYAN);
-            waitForKeyPress();
+            // Affichage du héros du joueur
+            ui.showPlayerHeroSection(knight1);
 
-            clearScreen();
-
-            // Affichage de l'équipe du joueur
-//            printColoredLine("🏆 VOTRE HÉROS 🏆", TextColor.ANSI.GOLD);
-            displayCharacterStats(knight1, TextColor.ANSI.CYAN);
-
-            printColoredLine("Appuyez sur une touche pour voir vos adversaires...", TextColor.ANSI.CYAN);
-            waitForKeyPress();
-
-            clearScreen();
-
-            // Affichage des ennemis
-            printColoredLine("💀 VOS ADVERSAIRES 💀", TextColor.ANSI.RED);
-            printLine("");
-
-            for (Chevalier ennemi : knightTab) {
-                displayCharacterStats(ennemi, TextColor.ANSI.RED);
-            }
-
-            printColoredLine("Appuyez sur une touche pour commencer le combat...", TextColor.ANSI.CYAN);
-            waitForKeyPress();
+            // Affichage des adversaires
+            ui.showAdversariesSection(knightTab);
 
             // Début du combat
-            animatedText("⚔ DÉBUT DU COMBAT ! ⚔", TextColor.ANSI.RED, 50);
-            Thread.sleep(1000);
+            ui.showCombatStart();
 
-            for (int i = 0; i < knightTab.length && knight1.getStat(Stat.HP) > 0; i++) {
-                // Déterminer qui commence
-                firstToAttack(knight1, knightTab[i]);
+            // === BOUCLE DE COMBAT PRINCIPALE ===
+            boolean playerAlive = true;
 
-                printLine("");
-                animatedText("🎯 Adversaire: " + knightTab[i].getName(), TextColor.ANSI.RED, 30);
-                Thread.sleep(1500);
+            for (int i = 0; i < knightTab.length && playerAlive; i++) {
+                boolean wonFight = handleSingleCombat(knight1, knightTab[i]);
 
-                while (knight1.getStat(Stat.HP) > 0 && knightTab[i].getStat(Stat.HP) > 0) {
-                    displayCombatStatus(knight1, knightTab[i]);
-
-                    if (knight1.isStart()) {
-                        printColoredLine("🗡 Tour de " + knight1.getName(), TextColor.ANSI.CYAN);
-
-                        String[] options = {"Attaquer", "Fuir"};
-                        int choice = showMenu(options, "Que voulez-vous faire ?");
-
-                        if (choice == 1) {
-                            animatedText("⚔ " + knight1.getName() + " attaque !", TextColor.ANSI.YELLOW, 30);
-                            knight1.performAttack(knightTab[i]);
-
-                            if (knightTab[i].getStat(Stat.HP) > 0) {
-                                printColoredText("💔 ", TextColor.ANSI.RED);
-                                printLine(knightTab[i].getName() + " a maintenant " + knightTab[i].getStat(Stat.HP) + " HP");
-                            } else {
-                                animatedText("💀 " + knightTab[i].getName() + " est vaincu !", TextColor.ANSI.GREEN, 50);
-                            }
-
-                        } else if (choice == 2) {
-                            animatedText("🏃 " + knight1.getName() + " prend la fuite !", TextColor.ANSI.YELLOW, 50);
-                            break;
-                        }
-
-                        Thread.sleep(2000);
-                    }
-
-                    if (knightTab[i].getStat(Stat.HP) > 0) {
-                        displayCombatStatus(knight1, knightTab[i]);
-
-                        printColoredLine("💀 Tour de " + knightTab[i].getName(), TextColor.ANSI.RED);
-                        printColoredLine("L'ennemi réfléchit...", TextColor.ANSI.RED);
-                        Thread.sleep(1500);
-
-                        animatedText("💥 " + knightTab[i].getName() + " attaque !", TextColor.ANSI.RED, 30);
-                        knightTab[i].performAttack(knight1);
-
-                        if (knight1.getStat(Stat.HP) > 0) {
-                            printColoredText("💔 ", TextColor.ANSI.RED);
-                            printLine(knight1.getName() + " a maintenant " + knight1.getStat(Stat.HP) + " HP");
-                        } else {
-                            animatedText("💀 " + knight1.getName() + " est vaincu !", TextColor.ANSI.RED, 50);
-                        }
-
-                        Thread.sleep(2000);
-                    }
-
-                    // Alternance des tours
-                    boolean temp = knight1.isStart();
-                    knight1.setStart(knightTab[i].isStart());
-                    knightTab[i].setStart(temp);
+                if (!wonFight) {
+                    playerAlive = false;
+                    break;
                 }
 
                 if (knight1.getStat(Stat.HP) <= 0) {
+                    playerAlive = false;
                     break;
                 }
             }
 
-            // Fin du combat
-            clearScreen();
-            animatedText("⚔ FIN DU COMBAT ! ⚔", TextColor.ANSI.MAGENTA, 50);
-            printLine("");
+            // === FIN DU JEU ===
+            boolean playerWon = knight1.getStat(Stat.HP) > 0;
+            ui.showCombatEnd(playerWon, knight1.EndCombatMessage());
 
-            if (knight1.getStat(Stat.HP) > 0) {
-                printColoredLine("🏆 VICTOIRE ! 🏆", TextColor.ANSI.GREEN);
-            } else {
-                printColoredLine("💀 DÉFAITE... 💀", TextColor.ANSI.RED);
-            }
-
-            printLine("");
-            printLine(knight1.EndCombatMessage());
-
-            printLine("");
-            printColoredLine("Appuyez sur une touche pour quitter...", TextColor.ANSI.CYAN);
-            waitForKeyPress();
-
+        } catch (IOException | InterruptedException e) {
+            System.err.println("Erreur durant l'exécution du jeu : " + e.getMessage());
         } finally {
-            // Nettoyage du terminal
-            cleanupTerminal();
+            // Nettoyage de l'interface utilisateur
+            try {
+                ui.cleanup();
+            } catch (IOException e) {
+                System.err.println("Erreur lors de la fermeture : " + e.getMessage());
+            }
         }
     }
 }
