@@ -7,7 +7,7 @@ import java.util.*;
  * Remplace les inventaires individuels par personnage
  * Inclut maintenant la gestion de l'or
  */
-public class GlobalInventory {
+public class GlobalInventory implements IGlobalInventory{
     private Map<String, Integer> items;
     private int gold; // Nouvelle propriété pour l'or
 

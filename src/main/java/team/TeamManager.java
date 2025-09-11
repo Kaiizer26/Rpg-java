@@ -10,9 +10,8 @@ import java.util.*;
 
 /**
  * Classe responsable de la gestion des équipes
- * Utilise des types cohérents (Personnage/Ally)
  */
-public class TeamManager {
+public class TeamManager implements ITeamManager{
     private static final int MAX_TEAM_SIZE = 3;
 
     private List<Ally> collection; // Tous les personnages disponibles
@@ -50,10 +49,6 @@ public class TeamManager {
         return activeTeam.size() >= MAX_TEAM_SIZE;
     }
 
-    public int getTeamSize() {
-        return activeTeam.size();
-    }
-
     // NOUVELLE MÉTHODE pour la boutique
     public int getCollectionSize() {
         return collection.size();
@@ -68,42 +63,7 @@ public class TeamManager {
         return new ArrayList<>(activeTeam);
     }
 
-    /**
-     * NOUVELLE MÉTHODE : Obtenir le prochain membre d'équipe vivant
-     * @param currentMember Le membre actuel (mort)
-     * @return Le prochain membre vivant, ou null si aucun
-     */
-    public Ally getNextAliveMember(Ally currentMember) {
-        // Retirer le membre mort de l'équipe active
-        activeTeam.remove(currentMember);
 
-        // Chercher le prochain membre vivant
-        for (Ally member : activeTeam) {
-            if (member.getStat(stats.Stat.HP) > 0) {
-                return member;
-            }
-        }
-        return null; // Plus de membres vivants
-    }
-
-    /**
-     * NOUVELLE MÉTHODE : Vérifier si l'équipe a encore des membres vivants
-     */
-    public boolean hasAliveMember() {
-        return activeTeam.stream().anyMatch(p -> p.getStat(stats.Stat.HP) > 0);
-    }
-
-    /**
-     * NOUVELLE MÉTHODE : Obtenir le premier membre vivant de l'équipe
-     */
-    public Ally getFirstAliveMember() {
-        return activeTeam.stream()
-                .filter(p -> p.getStat(stats.Stat.HP) > 0)
-                .findFirst()
-                .orElse(null);
-    }
-
-    // Le reste des méthodes UI reste identique mais avec les bons types...
     public void showTeamManagementMenu() throws IOException, InterruptedException {
         boolean continueManaging = true;
 
@@ -131,7 +91,7 @@ public class TeamManager {
         }
     }
 
-    private void displayTeamOverview() throws IOException {
+    public void displayTeamOverview() throws IOException {
         ui.printColoredLine("╔══════════════════════════════════════╗", TextColor.ANSI.CYAN);
         ui.printColoredLine("║            APERÇU ÉQUIPE             ║", TextColor.ANSI.CYAN);
         ui.printColoredLine("╚══════════════════════════════════════╝", TextColor.ANSI.CYAN);
@@ -145,7 +105,7 @@ public class TeamManager {
         ui.printLine("");
     }
 
-    private void showActiveTeam() throws IOException {
+    public void showActiveTeam() throws IOException {
         ui.clearScreen();
         ui.printColoredLine("👥 ÉQUIPE ACTIVE", TextColor.ANSI.CYAN);
         ui.printLine("");
@@ -174,7 +134,7 @@ public class TeamManager {
         ui.waitForKeyPress();
     }
 
-    private void showCollection() throws IOException {
+    public void showCollection() throws IOException {
         ui.clearScreen();
         ui.printColoredLine("📦 COLLECTION COMPLÈTE", TextColor.ANSI.CYAN);
         ui.printLine("");
@@ -204,7 +164,7 @@ public class TeamManager {
         ui.waitForKeyPress();
     }
 
-    private void addPersonnageToTeam() throws IOException {
+    public void addPersonnageToTeam() throws IOException {
         if (isTeamFull()) {
             ui.clearScreen();
             ui.printColoredLine("❌ L'équipe est déjà pleine ! (3/3)", TextColor.ANSI.RED);
@@ -252,7 +212,7 @@ public class TeamManager {
         }
     }
 
-    private void removePersonnageFromTeam() throws IOException {
+    public void removePersonnageFromTeam() throws IOException {
         if (activeTeam.isEmpty()) {
             ui.clearScreen();
             ui.printColoredLine("❌ L'équipe est vide.", TextColor.ANSI.RED);

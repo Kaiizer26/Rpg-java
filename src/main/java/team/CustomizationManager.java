@@ -13,7 +13,7 @@ import java.util.*;
 /**
  * Gestionnaire pour la personnalisation des personnages et de l'inventaire
  */
-public class CustomizationManager {
+public class CustomizationManager implements ICustomizationManager {
     private TerminalUI ui;
     private TeamManager teamManager;
     private GlobalInventory globalInventory;
@@ -57,7 +57,7 @@ public class CustomizationManager {
     /**
      * Afficher un aperçu de la personnalisation
      */
-    private void displayCustomizationOverview() throws IOException {
+    public void displayCustomizationOverview() throws IOException {
         ui.printColoredLine("╔══════════════════════════════════════╗", TextColor.ANSI.CYAN);
         ui.printColoredLine("║           PERSONNALISATION           ║", TextColor.ANSI.CYAN);
         ui.printColoredLine("╚══════════════════════════════════════╝", TextColor.ANSI.CYAN);
@@ -81,7 +81,7 @@ public class CustomizationManager {
     /**
      * Renommer le personnage principal (knight1 uniquement)
      */
-    private void renameMainCharacter() throws IOException {
+    public void renameMainCharacter() throws IOException {
         Ally mainCharacter = findMainCharacter();
 
         if (mainCharacter == null) {
@@ -122,7 +122,7 @@ public class CustomizationManager {
     /**
      * Menu de personnalisation des stats
      */
-    private void customizeStats() throws IOException {
+    public void customizeStats() throws IOException {
         List<Ally> collection = teamManager.getCollection();
 
         if (collection.isEmpty()) {
@@ -156,7 +156,7 @@ public class CustomizationManager {
     /**
      * Personnaliser les stats d'un personnage spécifique
      */
-    private void customizeCharacterStats(Ally character) throws IOException {
+    public void customizeCharacterStats(Ally character) throws IOException {
         boolean continueCustomizing = true;
         int availablePoints;
 
@@ -203,7 +203,7 @@ public class CustomizationManager {
     /**
      * Modifier une stat spécifique en respectant les points disponibles
      */
-    private void modifyStat(Ally character, Stat stat) throws IOException {
+    public void modifyStat(Ally character, Stat stat) throws IOException {
         int currentValue = character.getStat(stat);
         int availablePoints = character.getAvailablePoints();
 
@@ -273,7 +273,7 @@ public class CustomizationManager {
     /**
      * Afficher l'inventaire global
      */
-    private void showGlobalInventory() throws IOException {
+    public void showGlobalInventory() throws IOException {
         ui.clearScreen();
         ui.printColoredLine("📦 INVENTAIRE GLOBAL", TextColor.ANSI.CYAN);
         ui.printLine("");
@@ -303,7 +303,7 @@ public class CustomizationManager {
     /**
      * Afficher les détails des personnages
      */
-    private void showCharacterDetails() throws IOException {
+    public void showCharacterDetails() throws IOException {
         List<Ally> collection = teamManager.getCollection();
 
         ui.clearScreen();
@@ -338,7 +338,7 @@ public class CustomizationManager {
     /**
      * Trouver le personnage principal (celui avec isStart() == true)
      */
-    private Ally findMainCharacter() {
+    public Ally findMainCharacter() {
         for (Ally character : teamManager.getCollection()) {
             if (character.isStart()) {
                 return character;

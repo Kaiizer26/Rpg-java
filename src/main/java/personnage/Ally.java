@@ -5,9 +5,10 @@ import inventaire.Item;
 import stats.Stat;
 import stats.StatCombat;
 
+import java.io.IOException;
 import java.util.Map;
 
-public class Ally extends Personnage {
+public class Ally extends Personnage implements IAlly {
 
     public Ally(String name, int hp, int defense, int atk, int speed, int luck) {
         super(name, hp, defense, atk, speed, luck);
@@ -26,7 +27,7 @@ public class Ally extends Personnage {
     }
 
     @Override
-    public void performAttack(Personnage defender) {
+    public void performAttack(Personnage defender){
         int attack = this.getStat(Stat.ATTAQUE);
         int defense = defender.getStat(Stat.DEFENSE);
 

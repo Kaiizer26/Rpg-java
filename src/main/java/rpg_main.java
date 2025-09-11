@@ -9,7 +9,6 @@ import shop.ShopManager;
 import com.googlecode.lanterna.TextColor;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class rpg_main {
@@ -31,10 +30,10 @@ public class rpg_main {
     /**
      * Initialise les personnages et la collection
      */
-    private static void initializeCharacters() {
+    private static void initializeCharacters()  {
         // Création des personnages principaux
-        Chevalier knight1 = new Chevalier("Gustave", 99, 32, 45, 45, 57);
-        Chevalier knight2 = new Chevalier();
+        Knight knight1 = new Knight("Gustave", 99, 32, 45, 45, 57);
+        Knight knight2 = new Knight();
         knight2.setName("Simon");
         knight2.setStat(Stat.HP, 99);
         knight2.setStat(Stat.DEFENSE, 32);
@@ -50,10 +49,10 @@ public class rpg_main {
         globalInventory.addItem("Potion de soin", 5);
 
         // Création d'autres personnages pour la collection
-        Chevalier jordy = new Chevalier("Jordy");
-        Chevalier johan = new Chevalier("Johan");
-        Chevalier maelle = new Chevalier("Maelle");
-        Chevalier kaiizer = new Chevalier("Kaiizerrr");
+        Knight jordy = new Knight("Jordy");
+        Knight johan = new Knight("Johan");
+        Knight maelle = new Knight("Maelle");
+        Knight kaiizer = new Knight("Kaiizerrr");
 
         // Ajout de tous les personnages à la collection
         teamManager.addToCollection(knight1);
@@ -135,8 +134,8 @@ public class rpg_main {
 
         // Créer des adversaires pour le tournoi
         Personnage[] enemies = {
-                new Chevalier("Garde du Roi", 80, 25, 35, 20, 15),
-                new Chevalier("Champion de l'Arène", 120, 30, 45, 25, 20)
+                new Knight("Garde du Roi", 80, 25, 35, 20, 15),
+                new Knight("Champion de l'Arène", 120, 30, 45, 25, 20)
         };
 
         // NOUVEAU : Utiliser le système de combat en équipe
@@ -215,15 +214,15 @@ public class rpg_main {
 
         switch (choice) {
             case 1:
-                enemy = new Chevalier("Garde débutant", 60, 15, 25, 15, 10);
+                enemy = new Knight("Garde débutant", 60, 15, 25, 15, 10);
                 goldReward = 30;
                 break;
             case 2:
-                enemy = new Chevalier("Soldat expérimenté", 85, 20, 35, 20, 15);
+                enemy = new Knight("Soldat expérimenté", 85, 20, 35, 20, 15);
                 goldReward = 50;
                 break;
             case 3:
-                enemy = new Chevalier("Chevalier royal", 110, 25, 45, 25, 20);
+                enemy = new Knight("Chevalier royal", 110, 25, 45, 25, 20);
                 goldReward = 75;
                 break;
             case 4:

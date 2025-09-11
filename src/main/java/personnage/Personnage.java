@@ -1,4 +1,7 @@
 package personnage;
+import com.googlecode.lanterna.TextColor;
+import ui.TerminalUI;
+import java.io.IOException;
 
 import com.sun.source.tree.Tree;
 import inventaire.Item;
@@ -8,6 +11,8 @@ import stats.StatCombat;
 import java.util.*;
 
 public abstract class Personnage implements IPersonnage {
+    private static TerminalUI ui = new TerminalUI();
+
     Random random = new Random();
     private String name;
     private boolean start;
@@ -119,7 +124,6 @@ public abstract class Personnage implements IPersonnage {
                 }
             }
         } else {
-            // Optionnel : lancer une exception ou afficher un message
             System.out.println("Pas assez de points disponibles! Points disponibles: " + availablePoints);
         }
     }
@@ -210,12 +214,6 @@ public abstract class Personnage implements IPersonnage {
         return totalAllowedPoints - spentPoints;
     }
 
-    // Méthode pour monter de niveau (appelée après victoire en combat)
-    public void levelUp() {
-        this.level++;
-        // Chaque niveau donne 5 points de stats supplémentaires à dépenser
-        System.out.println(name + " monte au niveau " + level + "! +5 points de stats disponibles.");
-    }
 
     public int getMaxAvailablePoints() {
         return baseStatPoints + ((level - 1) * 5);

@@ -5,7 +5,6 @@ import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import com.googlecode.lanterna.terminal.Terminal;
 import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.input.KeyType;
-import personnage.Chevalier;
 import personnage.Personnage;
 import stats.Stat;
 
@@ -13,15 +12,11 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
-
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
-
 /**
  * Classe responsable de l'interface utilisateur avec Lanterna
  * Centralise toutes les méthodes d'affichage et d'interaction
  */
-public class TerminalUI {
+public class TerminalUI implements ITerminalUI {
     private Terminal terminal;
 
     /**
@@ -210,7 +205,7 @@ public class TerminalUI {
     /**
      * Vide le buffer des touches en attente pour éviter les saisies indésirables
      */
-    private void clearInputBuffer() throws IOException {
+    public void clearInputBuffer() throws IOException {
         // Continue à lire tant qu'il y a des touches en attente
         while (terminal.pollInput() != null) {
             // Vide le buffer en lisant toutes les touches en attente
@@ -424,65 +419,6 @@ public class TerminalUI {
         return dodgeSuccess;
     }
 
-    /**
-     * Version alternative avec différents symboles aléatoires
-     */
-    public boolean showDodgeQTEWithRandomSymbol() throws IOException, InterruptedException {
-        // Symboles possibles avec leurs touches correspondantes
-        String[] symbols = {"❌ X", "⭕ O", "🔵 B", "🔴 A"};
-        char[] keys = {'x', 'o', 'b', 'a'};
-
-        Random random = new Random();
-        int symbolIndex = random.nextInt(symbols.length);
-
-        // Délai aléatoire avant l'apparition du bouton (1-3 secondes)
-        int randomDelay = ThreadLocalRandom.current().nextInt(1000, 3001);
-
-        printColoredLine("⚔️ L'ennemi lance son attaque...", TextColor.ANSI.RED);
-        printColoredLine("🛡️ Préparez-vous à esquiver !", TextColor.ANSI.YELLOW);
-
-        Thread.sleep(randomDelay);
-        clearInputBuffer();
-
-        // Afficher le symbole choisi
-        clearScreen();
-        printLine("");
-        printLine("");
-        printColoredLine("           ╔═══════════════════════════╗", TextColor.ANSI.GREEN);
-        printColoredLine("           ║                           ║", TextColor.ANSI.GREEN);
-        printColoredLine("           ║     " + symbols[symbolIndex] + " VITE !      ║", TextColor.ANSI.GREEN);
-        printColoredLine("           ║                           ║", TextColor.ANSI.GREEN);
-        printColoredLine("           ╚═══════════════════════════╝", TextColor.ANSI.GREEN);
-        terminal.flush();
-
-        long startTime = System.currentTimeMillis();
-        long timeLimit = 350;
-        boolean dodgeSuccess = false;
-
-        while (System.currentTimeMillis() - startTime < timeLimit) {
-            KeyStroke key = terminal.pollInput();
-            if (key != null && key.getKeyType() == KeyType.Character) {
-                char c = Character.toLowerCase(key.getCharacter());
-                if (c == keys[symbolIndex]) {
-                    dodgeSuccess = true;
-                    break;
-                }
-            }
-            Thread.sleep(1);
-        }
-
-        clearScreen();
-        if (dodgeSuccess) {
-            animatedText("🎯 ESQUIVE RÉUSSIE ! 🎯", TextColor.ANSI.GREEN, 30);
-            printColoredLine("Réflexes exceptionnels !", TextColor.ANSI.GREEN);
-        } else {
-            animatedText("💥 ESQUIVE RATÉE ! 💥", TextColor.ANSI.RED, 30);
-            printColoredLine("Trop lent ! L'attaque vous atteint !", TextColor.ANSI.RED);
-        }
-
-        Thread.sleep(1500);
-        return dodgeSuccess;
-    }
 
     /**
      * Permet à l'utilisateur de saisir une ligne de texte

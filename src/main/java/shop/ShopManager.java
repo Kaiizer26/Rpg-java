@@ -8,14 +8,12 @@ import com.googlecode.lanterna.TextColor;
 import stats.Stat;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Gestionnaire de la boutique du jeu
  * Permet d'acheter des alliés et des objets avec de l'or
  */
-public class ShopManager {
+public class ShopManager implements IShopManager {
     private TerminalUI ui;
     private TeamManager teamManager;
     private GlobalInventory globalInventory;
@@ -80,7 +78,7 @@ public class ShopManager {
     /**
      * Affiche la boutique d'alliés
      */
-    private void showAllyShop() throws IOException, InterruptedException {
+    public void showAllyShop() throws IOException, InterruptedException {
         ui.clearScreen();
         ui.printColoredLine("⚔️ RECRUTEMENT D'ALLIÉS", TextColor.ANSI.CYAN);
         ui.printLine("");
@@ -141,7 +139,7 @@ public class ShopManager {
     /**
      * Affiche la boutique d'objets
      */
-    private void showItemShop() throws IOException, InterruptedException {
+    public void showItemShop() throws IOException, InterruptedException {
         ui.clearScreen();
         ui.printColoredLine("🎒 BOUTIQUE D'OBJETS", TextColor.ANSI.CYAN);
         ui.printLine("");
@@ -189,19 +187,19 @@ public class ShopManager {
     /**
      * Crée des alliés disponibles à l'achat avec des stats variées
      */
-    private Ally[] createAvailableAllies() {
+    public Ally[] createAvailableAllies() {
         return new Ally[] {
-                new Chevalier("Recrue Élite", 70, 20, 30, 25, 18),
-                new Chevalier("Vétéran", 90, 25, 40, 20, 22),
-                new Chevalier("Champion", 99, 30, 50, 30, 25),
-                new Chevalier("Légende", 99, 35, 65, 35, 30)
+                new Knight("Recrue Élite", 70, 20, 30, 25, 18),
+                new Knight("Vétéran", 90, 25, 40, 20, 22),
+                new Knight("Champion", 99, 30, 50, 30, 25),
+                new Knight("Légende", 99, 35, 65, 35, 30)
         };
     }
 
     /**
      * Calcule le prix d'un allié basé sur ses statistiques
      */
-    private int calculateAllyPrice(Ally ally) {
+    public int calculateAllyPrice(Ally ally) {
         int basePrice = ALLY_BASE_PRICE;
         int statBonus = (ally.getStat(Stat.HP) + ally.getStat(Stat.ATTAQUE) +
                 ally.getStat(Stat.DEFENSE) + ally.getStat(Stat.SPEED) +
@@ -212,7 +210,7 @@ public class ShopManager {
     /**
      * Achète un allié
      */
-    private void buyAlly(Ally ally) throws IOException, InterruptedException {
+    public void buyAlly(Ally ally) throws IOException, InterruptedException {
         int price = calculateAllyPrice(ally);
 
         if (globalInventory.getGold() >= price) {
@@ -250,7 +248,7 @@ public class ShopManager {
     /**
      * Achète un objet
      */
-    private void buyItem(String[] itemData) throws IOException, InterruptedException {
+    public void buyItem(String[] itemData) throws IOException, InterruptedException {
         String itemName = itemData[0];
         int price = Integer.parseInt(itemData[1]);
         String description = itemData[2];
@@ -288,7 +286,7 @@ public class ShopManager {
     /**
      * Affiche les statistiques du joueur
      */
-    private void showPlayerStats() throws IOException {
+    public void showPlayerStats() throws IOException {
         ui.clearScreen();
         ui.printColoredLine("📊 VOS STATISTIQUES", TextColor.ANSI.CYAN);
         ui.printLine("");

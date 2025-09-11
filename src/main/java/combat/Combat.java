@@ -5,10 +5,10 @@ import personnage.Personnage;
 import stats.StatCombat;
 import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.input.KeyStroke;
-import java.util.Random;
+
 import java.util.List;
 
-import personnage.Chevalier;
+import personnage.Knight;
 import stats.Stat;
 import ui.TerminalUI;
 import inventaire.GlobalInventory;
@@ -20,7 +20,7 @@ import java.io.IOException;
  * Classe responsable de la gestion des combats en équipe
  * Centralise toute la logique de combat (tours, tournois, etc.)
  */
-public class Combat {
+public class Combat implements ICombat{
     private TerminalUI ui;
     private GlobalInventory globalInventory;
 
@@ -495,7 +495,7 @@ public class Combat {
     }
 
     // Maintenir la compatibilité avec l'ancien système pour les combats solo
-    public boolean startSingleCombat(Chevalier player, Chevalier enemy) throws IOException, InterruptedException {
+    public boolean startSingleCombat(Knight player, Knight enemy) throws IOException, InterruptedException {
         ui.showCombatStart();
 
         // Convertir en combat d'équipe avec un seul membre si c'est un Ally

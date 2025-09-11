@@ -1,12 +1,6 @@
 package personnage;
 
-import inventaire.Item;
-import stats.Stat;
-import stats.StatCombat;
-
-import java.util.Map;
-
-public class Gobelin extends Ennemi{
+public class Gobelin extends Ennemy {
 
     public Gobelin(){
         super();

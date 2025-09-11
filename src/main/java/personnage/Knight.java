@@ -1,20 +1,14 @@
 package personnage;
 
-import inventaire.Item;
-import stats.Stat;
-import stats.StatCombat;
-
-import java.util.Map;
-
-public class Chevalier extends Ally{
-    public Chevalier(String name, int hp, int defense, int atk, int speed, int luck ){
+public class Knight extends Ally{
+    public Knight(String name, int hp, int defense, int atk, int speed, int luck ){
         super(name, hp, defense, atk, speed, luck);
     }
-    public Chevalier(){
+    public Knight(){
         super();
     }
 
-    public Chevalier(String name){
+    public Knight(String name){
         super(name);
     }
     public String toString(){

@@ -6,7 +6,7 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.Random;
 
-public class Ennemi extends Personnage {
+public class Ennemy extends Personnage implements IEnnemy {
 
     Random random = new Random();
     private String name;
@@ -15,11 +15,11 @@ public class Ennemi extends Personnage {
     private Map<StatCombat, Integer> statsCombat;
 
 
-    public Ennemi(String name, int hp, int defense, int atk, int speed, int luck ) {
+    public Ennemy(String name, int hp, int defense, int atk, int speed, int luck ) {
         super(name, hp, defense, atk, speed, luck);
     }
 
-    public Ennemi() {
+    public Ennemy() {
         this.name = "Bot";
         this.stats = new EnumMap<>(Stat.class);
         this.statsCombat = new EnumMap<>(StatCombat.class);
@@ -29,7 +29,7 @@ public class Ennemi extends Personnage {
         }
     }
 
-    public Ennemi(String name) {
+    public Ennemy(String name) {
         this();
         this.name = name;
     }
