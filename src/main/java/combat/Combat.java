@@ -11,6 +11,7 @@ import java.util.List;
 import personnage.Chevalier;
 import stats.Stat;
 import ui.TerminalUI;
+import inventaire.GlobalInventory;
 import com.googlecode.lanterna.TextColor;
 
 import java.io.IOException;
@@ -21,12 +22,31 @@ import java.io.IOException;
  */
 public class Combat {
     private TerminalUI ui;
+    private GlobalInventory globalInventory;
 
     /**
      * Constructeur
      */
     public Combat(TerminalUI ui) {
         this.ui = ui;
+        this.globalInventory = new GlobalInventory();
+
+    }
+
+
+    /**
+     * Constructeur avec inventaire global
+     */
+    public Combat(TerminalUI ui, GlobalInventory globalInventory) {
+        this.ui = ui;
+        this.globalInventory = globalInventory;
+    }
+
+    /**
+     * Setter pour l'inventaire global (si besoin)
+     */
+    public void setGlobalInventory(GlobalInventory globalInventory) {
+        this.globalInventory = globalInventory;
     }
 
     /**
@@ -108,35 +128,147 @@ public class Combat {
     }
 
     /**
-     * Gère le tour de combat d'un joueur
+     * NOUVELLE MÉTHODE : Gère l'utilisation d'objets en combat
+     */
+    private boolean handleItemUsage(Ally player) throws IOException, InterruptedException {
+        if (globalInventory == null) {
+            ui.printColoredLine("❌ Inventaire non disponible !", TextColor.ANSI.RED);
+            Thread.sleep(1500);
+            return false; // Le tour continue normalement
+        }
+
+        ui.clearScreen();
+        ui.printColoredLine("🎒 UTILISER UN OBJET", TextColor.ANSI.MAGENTA);
+        ui.printLine("");
+
+        // Vérifier les potions de soin disponibles
+        int healingPotions = globalInventory.getItemQuantity("Potion de soin");
+
+        if (healingPotions <= 0) {
+            ui.printColoredLine("❌ Aucune potion de soin disponible !", TextColor.ANSI.RED);
+            ui.printLine("");
+            ui.printColoredLine("Appuyez sur une touche pour revenir au menu de combat...", TextColor.ANSI.CYAN);
+            ui.waitForKeyPress();
+            return false; // Le tour continue
+        }
+
+        // Afficher les objets disponibles
+        ui.printColoredLine("Objets disponibles :", TextColor.ANSI.YELLOW);
+        ui.printColoredLine("1 - 🧪 Potion de soin (" + healingPotions + " disponible(s))", TextColor.ANSI.GREEN);
+        ui.printColoredLine("2 - 🔙 Annuler", TextColor.ANSI.CYAN);
+
+        ui.printLine("");
+        ui.printColoredText("Votre choix : ", TextColor.ANSI.YELLOW);
+
+        // Lecture du choix
+        while (true) {
+            KeyStroke key = ui.waitForKeyPress();
+            if (key.getKeyType() == KeyType.Character) {
+                char c = key.getCharacter();
+
+                if (c == '1') {
+                    // Utiliser une potion de soin
+                    return useHealingPotion(player);
+                } else if (c == '2') {
+                    // Annuler
+                    return false;
+                }
+            }
+        }
+    }
+
+    /**
+     * NOUVELLE MÉTHODE : Utilise une potion de soin sur l'allié
+     */
+    private boolean useHealingPotion(Ally player) throws IOException, InterruptedException {
+        // Vérifier qu'il y a bien des potions
+        if (globalInventory.getItemQuantity("Potion de soin") <= 0) {
+            ui.printColoredLine("❌ Aucune potion de soin disponible !", TextColor.ANSI.RED);
+            Thread.sleep(1500);
+            return false;
+        }
+
+        // CORRECTION: Utiliser les bonnes méthodes pour les HP
+        int currentHP = player.getStat(Stat.HP);
+        int maxHP = player.getMaxHP(); // Cette méthode retourne maintenant maxHP stocké
+
+        // DEBUG: Afficher les valeurs pour vérifier
+        ui.printColoredLine("DEBUG - HP actuels: " + currentHP, TextColor.ANSI.CYAN);
+        ui.printColoredLine("DEBUG - HP maximum: " + maxHP, TextColor.ANSI.CYAN);
+
+        // Si déjà pleine vie
+        if (currentHP >= maxHP) {
+            ui.printColoredLine("❌ " + player.getName() + " a déjà tous ses HP !", TextColor.ANSI.YELLOW);
+            ui.printColoredLine("HP actuels: " + currentHP + "/" + maxHP, TextColor.ANSI.YELLOW);
+            ui.printLine("");
+            ui.printColoredLine("Appuyez sur une touche pour revenir au menu...", TextColor.ANSI.CYAN);
+            ui.waitForKeyPress();
+            return false;
+        }
+
+        // Utiliser la potion
+        int healAmount = 65; // Les potions soignent 65 HP
+        int newHP = Math.min(currentHP + healAmount, maxHP);
+        int actualHeal = newHP - currentHP;
+
+        // CORRECTION: Utiliser la méthode healBy() au lieu de setStat()
+        player.healBy(actualHeal);
+        globalInventory.removeItem("Potion de soin", 1);
+
+        // Animation d'utilisation
+        ui.clearScreen();
+        ui.animatedText("🧪 " + player.getName() + " utilise une Potion de soin !", TextColor.ANSI.GREEN, 50);
+        ui.animatedText("✨ +" + actualHeal + " HP récupérés !", TextColor.ANSI.MAGENTA, 30);
+        ui.printColoredLine("❤️ HP: " + currentHP + " → " + newHP + " (+" + actualHeal + ")", TextColor.ANSI.GREEN);
+
+        ui.printLine("");
+        ui.printColoredLine("Potions restantes: " + globalInventory.getItemQuantity("Potion de soin"), TextColor.ANSI.YELLOW);
+        Thread.sleep(2500);
+
+        return true; // Le tour est consommé
+    }
+
+
+
+    /**
+     * Gère le tour de combat d'un joueur (MODIFIÉ pour inclure les objets)
      * @return true si le combat continue, false si le joueur fuit
      */
     private boolean handlePlayerTurn(Ally player, Personnage enemy) throws IOException, InterruptedException {
         ui.printColoredLine("🗡 Tour de " + player.getName(), TextColor.ANSI.CYAN);
 
-        String[] options = {"Attaquer", "Fuir"};
+        String[] options = {"⚔️ Attaquer", "🧪 Utiliser un objet", "🏃 Fuir"};
         int choice = ui.showMenu(options, "Que voulez-vous faire ?");
 
-        if (choice == 1) { // Attaquer
-            ui.animatedText("⚔ " + player.getName() + " attaque !", TextColor.ANSI.YELLOW, 30);
-            player.performAttack(enemy);
+        switch (choice) {
+            case 1: // Attaquer
+                ui.animatedText("⚔ " + player.getName() + " attaque !", TextColor.ANSI.YELLOW, 30);
+                player.performAttack(enemy);
 
-            if (enemy.getStat(Stat.HP) > 0) {
-                ui.printColoredText("💔 ", TextColor.ANSI.RED);
-                ui.printLine(enemy.getName() + " a maintenant " + enemy.getStat(Stat.HP) + " HP");
-            } else {
-                ui.animatedText("💀 " + enemy.getName() + " est vaincu !", TextColor.ANSI.GREEN, 50);
+                if (enemy.getStat(Stat.HP) > 0) {
+                    ui.printColoredText("💔 ", TextColor.ANSI.RED);
+                    ui.printLine(enemy.getName() + " a maintenant " + enemy.getStat(Stat.HP) + " HP");
+                } else {
+                    ui.animatedText("💀 " + enemy.getName() + " est vaincu !", TextColor.ANSI.GREEN, 50);
 
-                // Ajouter de l'expérience au joueur actuel
-                int expGained = 25 + (enemy.getLevel() * 5); // Plus l'ennemi est fort, plus d'exp
-                player.addExperience(expGained);
-                ui.printColoredLine("✨ " + player.getName() + " gagne " + expGained + " points d'expérience!", TextColor.ANSI.MAGENTA);
-            }
-            return true; // Continue le combat
+                    // Ajouter de l'expérience au joueur actuel
+                    int expGained = 25 + (enemy.getLevel() * 5);
+                    player.addExperience(expGained);
+                    ui.printColoredLine("✨ " + player.getName() + " gagne " + expGained + " points d'expérience!", TextColor.ANSI.MAGENTA);
+                }
+                return true; // Continue le combat
 
-        } else if (choice == 2) { // Fuir
-            ui.animatedText("🏃 " + player.getName() + " prend la fuite !", TextColor.ANSI.YELLOW, 50);
-            return false; // Fuit le combat
+            case 2: // Utiliser un objet
+                boolean itemUsed = handleItemUsage(player);
+                if (!itemUsed) {
+                    // Si aucun objet n'a été utilisé, rejouer le tour
+                    return handlePlayerTurn(player, enemy);
+                }
+                return true; // Continue le combat (tour consommé)
+
+            case 3: // Fuir
+                ui.animatedText("🏃 " + player.getName() + " prend la fuite !", TextColor.ANSI.YELLOW, 50);
+                return false; // Fuit le combat
         }
 
         return true;

@@ -15,8 +15,8 @@ public class Ennemi extends Personnage {
     private Map<StatCombat, Integer> statsCombat;
 
 
-    public Ennemi(String name, int hp, int defense, int atk, int speed, int luck, boolean start) {
-        super(name, hp, defense, atk, speed, luck, start);
+    public Ennemi(String name, int hp, int defense, int atk, int speed, int luck ) {
+        super(name, hp, defense, atk, speed, luck);
     }
 
     public Ennemi() {
@@ -55,6 +55,5 @@ public class Ennemi extends Personnage {
         int newHP = defender.getStat(Stat.HP) - damage;
         defender.setStat(Stat.HP, Math.max(newHP, 0));
 
-        System.out.println(this.getName() + " attaque " + defender.getName() + " et inflige " + damage + " dégâts !");
     }
 }

@@ -16,8 +16,8 @@ public class Gobelin extends Ennemi{
         super(name);
     }
 
-    public Gobelin(String name, int hp, int defense, int atk, int speed, int luck, boolean start) {
-        super(name, hp, defense, atk, speed, luck, start);
+    public Gobelin(String name, int hp, int defense, int atk, int speed, int luck ) {
+        super(name, hp, defense, atk, speed, luck);
     }
 
 

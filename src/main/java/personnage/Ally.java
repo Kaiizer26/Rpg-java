@@ -9,8 +9,8 @@ import java.util.Map;
 
 public class Ally extends Personnage {
 
-    public Ally(String name, int hp, int defense, int atk, int speed, int luck, boolean start) {
-        super(name, hp, defense, atk, speed, luck, start);
+    public Ally(String name, int hp, int defense, int atk, int speed, int luck) {
+        super(name, hp, defense, atk, speed, luck);
     }
 
     public Ally() {

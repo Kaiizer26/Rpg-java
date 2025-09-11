@@ -15,12 +15,14 @@ import java.util.List;
 public class rpg_main {
     // Instance de l'interface utilisateur
     private static TerminalUI ui = new TerminalUI();
-    // Instance du gestionnaire de combat
-    private static Combat combatManager = new Combat(ui);
+
     // Instance du gestionnaire d'équipe
     private static TeamManager teamManager = new TeamManager(ui);
     // Instance de l'inventaire global
     private static GlobalInventory globalInventory = new GlobalInventory();
+
+    // Instance du gestionnaire de combat
+    private static Combat combatManager = new Combat(ui, globalInventory);
     // Instance du gestionnaire de personnalisation
     private static CustomizationManager customizationManager = new CustomizationManager(ui, teamManager, globalInventory);
     // Instance du gestionnaire de boutique
@@ -31,7 +33,7 @@ public class rpg_main {
      */
     private static void initializeCharacters() {
         // Création des personnages principaux
-        Chevalier knight1 = new Chevalier("Gustave", 99, 32, 45, 45, 57, true);
+        Chevalier knight1 = new Chevalier("Gustave", 99, 32, 45, 45, 57);
         Chevalier knight2 = new Chevalier();
         knight2.setName("Simon");
         knight2.setStat(Stat.HP, 99);
@@ -64,6 +66,7 @@ public class rpg_main {
         // Formation d'une équipe initiale avec les personnages principaux
         teamManager.addToTeam(knight1);
         teamManager.addToTeam(knight2);
+
     }
 
     /**
@@ -132,8 +135,8 @@ public class rpg_main {
 
         // Créer des adversaires pour le tournoi
         Personnage[] enemies = {
-                new Chevalier("Garde du Roi", 80, 25, 35, 20, 15, false),
-                new Chevalier("Champion de l'Arène", 120, 30, 45, 25, 20, false)
+                new Chevalier("Garde du Roi", 80, 25, 35, 20, 15),
+                new Chevalier("Champion de l'Arène", 120, 30, 45, 25, 20)
         };
 
         // NOUVEAU : Utiliser le système de combat en équipe
@@ -212,15 +215,15 @@ public class rpg_main {
 
         switch (choice) {
             case 1:
-                enemy = new Chevalier("Garde débutant", 60, 15, 25, 15, 10, false);
+                enemy = new Chevalier("Garde débutant", 60, 15, 25, 15, 10);
                 goldReward = 30;
                 break;
             case 2:
-                enemy = new Chevalier("Soldat expérimenté", 85, 20, 35, 20, 15, false);
+                enemy = new Chevalier("Soldat expérimenté", 85, 20, 35, 20, 15);
                 goldReward = 50;
                 break;
             case 3:
-                enemy = new Chevalier("Chevalier royal", 110, 25, 45, 25, 20, false);
+                enemy = new Chevalier("Chevalier royal", 110, 25, 45, 25, 20);
                 goldReward = 75;
                 break;
             case 4:

@@ -191,10 +191,10 @@ public class ShopManager {
      */
     private Ally[] createAvailableAllies() {
         return new Ally[] {
-                new Chevalier("Recrue Élite", 70, 20, 30, 25, 18, true),
-                new Chevalier("Vétéran", 90, 25, 40, 20, 22, true),
-                new Chevalier("Champion", 99, 30, 50, 30, 25, true),
-                new Chevalier("Légende", 99, 35, 65, 35, 30, true)
+                new Chevalier("Recrue Élite", 70, 20, 30, 25, 18),
+                new Chevalier("Vétéran", 90, 25, 40, 20, 22),
+                new Chevalier("Champion", 99, 30, 50, 30, 25),
+                new Chevalier("Légende", 99, 35, 65, 35, 30)
         };
     }
 

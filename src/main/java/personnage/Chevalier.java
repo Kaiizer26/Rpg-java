@@ -7,8 +7,8 @@ import stats.StatCombat;
 import java.util.Map;
 
 public class Chevalier extends Ally{
-    public Chevalier(String name, int hp, int defense, int atk, int speed, int luck, boolean start){
-        super(name, hp, defense, atk, speed, luck, start);
+    public Chevalier(String name, int hp, int defense, int atk, int speed, int luck ){
+        super(name, hp, defense, atk, speed, luck);
     }
     public Chevalier(){
         super();

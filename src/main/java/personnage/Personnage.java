@@ -14,6 +14,8 @@ public abstract class Personnage implements IPersonnage {
     private Map<Stat, Integer> stats;
     private Map<StatCombat, Integer> statsCombat;
 
+    private int maxHP;
+
     // NOUVEAU : Système de niveau et expérience
     private int baseStatPoints;
 
@@ -43,6 +45,8 @@ public abstract class Personnage implements IPersonnage {
         }
         this.baseStatPoints = totalBaseStats;
 
+        // CORRECTION: maxHP doit être défini APRÈS avoir mis les stats dans la map
+        this.maxHP = this.stats.get(Stat.HP);
     }
 
     public Personnage(String name){
@@ -50,24 +54,25 @@ public abstract class Personnage implements IPersonnage {
         this.name = name;
     }
 
-    public Personnage(String name, int hp, int defense, int atk, int speed, int luck, boolean start){
+    public Personnage(String name, int hp, int defense, int atk, int speed, int luck){
         this.name = name;
-        this.start = start;
         this.stats = new EnumMap<>(Stat.class);
         this.statsCombat = new EnumMap<>(StatCombat.class);
+        // Mettre les stats dans la map EN PREMIER
         stats.put(Stat.HP, hp);
         stats.put(Stat.ATTAQUE, atk);
         stats.put(Stat.DEFENSE, defense);
         stats.put(Stat.SPEED, speed);
         stats.put(Stat.LUCK, luck);
 
-        // NOUVEAU : Initialisation du système de niveau
+        // CORRECTION: maxHP défini APRÈS avoir mis les stats dans la map
+        this.maxHP = hp;
+
         // Initialisation du système de niveau
         this.level = 1; // Commencer au niveau 1
         this.experience = 0;
         this.experienceToNextLevel = 100;
         this.baseStatPoints = hp + atk + defense + speed + luck;
-
     }
 
     public String toString(){
@@ -103,6 +108,16 @@ public abstract class Personnage implements IPersonnage {
         // Vérifier si on a assez de points disponibles
         if (pointsDifference <= availablePoints) {
             stats.put(stat, value);
+
+            // NOUVEAU: Si on modifie les HP, mettre à jour maxHP
+            if (stat == Stat.HP) {
+                this.maxHP = value;
+                // S'assurer que les HP actuels ne dépassent pas les nouveaux maxHP
+                // (au cas où on diminuerait les HP max)
+                if (getStat(Stat.HP) > maxHP) {
+                    stats.put(Stat.HP, maxHP);
+                }
+            }
         } else {
             // Optionnel : lancer une exception ou afficher un message
             System.out.println("Pas assez de points disponibles! Points disponibles: " + availablePoints);
@@ -159,7 +174,6 @@ public abstract class Personnage implements IPersonnage {
         return experienceToNextLevel;
     }
 
-
     // Vérifier si le personnage monte de niveau
     private void checkLevelUp() {
         while (experience >= experienceToNextLevel) {
@@ -178,28 +192,6 @@ public abstract class Personnage implements IPersonnage {
         }
         return total;
     }
-
-    // SUPPRIMÉ : Méthodes d'inventaire (maintenant gérées globalement)
-    /*
-    public Map<String, Integer> getInventory() {
-        return this.inventory;
-    }
-
-    public void addItem(String name, int nb) {
-        this.inventory.put(name, this.inventory.getOrDefault(name, 0) + nb);
-    }
-
-    public void decrementItem(String name, int nb) {
-        int current = this.inventory.getOrDefault(name, 0);
-        int newValue = current - nb;
-
-        if (newValue > 0) {
-            this.inventory.put(name, newValue);
-        } else {
-            this.inventory.remove(name); // si nb négatif de l'objet on supp
-        }
-    }
-    */
 
     /**
      * Calcule le nombre de points disponibles pour améliorer les stats
@@ -228,9 +220,69 @@ public abstract class Personnage implements IPersonnage {
     public int getMaxAvailablePoints() {
         return baseStatPoints + ((level - 1) * 5);
     }
+
     public String EndCombatMessage(){
         return "Vous avez gagné ! \nNom : " + this.getName() +
                 "\nNiveau : " + this.getLevel() +
                 "\nStats de Combat : " + this.getAllStatsCombat();
+    }
+
+    public int getMaxHP() {
+        return maxHP;
+    }
+
+    // ===== NOUVELLES MÉTHODES POUR GÉRER LES HP =====
+
+    /**
+     * Restaure les HP au maximum
+     */
+    public void restoreFullHP() {
+        this.stats.put(Stat.HP, this.maxHP);
+    }
+
+    /**
+     * Vérifie si le personnage est mort
+     */
+    public boolean isDead() {
+        return getStat(Stat.HP) <= 0;
+    }
+
+    /**
+     * Vérifie si le personnage a tous ses HP
+     */
+    public boolean isFullHealth() {
+        return getStat(Stat.HP) >= getMaxHP();
+    }
+
+    /**
+     * Retourne le nombre de HP manquants
+     */
+    public int getMissingHP() {
+        return getMaxHP() - getStat(Stat.HP);
+    }
+
+    /**
+     * Soigne le personnage d'un certain montant (sans dépasser maxHP)
+     */
+    public void healBy(int amount) {
+        int currentHP = getStat(Stat.HP);
+        int newHP = Math.min(currentHP + amount, getMaxHP());
+        this.stats.put(Stat.HP, newHP); // Utilisation directe pour éviter la validation de points
+    }
+
+    /**
+     * Met à jour maxHP manuellement si besoin (méthode utilitaire)
+     */
+    public void updateMaxHP() {
+        this.maxHP = getStat(Stat.HP);
+    }
+
+    /**
+     * Inflige des dégâts au personnage (sans descendre en dessous de 0)
+     */
+    public void takeDamage(int damage) {
+        int currentHP = getStat(Stat.HP);
+        int newHP = Math.max(currentHP - damage, 0);
+        this.stats.put(Stat.HP, newHP); // Utilisation directe pour éviter la validation de points
     }
 }
