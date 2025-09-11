@@ -75,7 +75,7 @@ public abstract class Personnage implements IPersonnage {
         this.statsCombat.put(stat, value);
     }
 
-    void addStatsCombat(StatCombat stat, int value){
+    public void addStatsCombat(StatCombat stat, int value){
         this.statsCombat.put(stat, this.getStatCombat(stat)+ value);
     }
 

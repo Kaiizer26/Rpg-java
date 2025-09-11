@@ -6,17 +6,17 @@ import stats.StatCombat;
 
 import java.util.Map;
 
-public class Ennemi extends Personnage {
+public class Ally extends Personnage {
 
-    public Ennemi(String name, int hp, int defense, int atk, int speed, int luck, boolean start) {
+    public Ally(String name, int hp, int defense, int atk, int speed, int luck, boolean start) {
         super(name, hp, defense, atk, speed, luck, start);
     }
 
-    public Ennemi() {
+    public Ally() {
         super();
     }
 
-    public Ennemi(String name) {
+    public Ally(String name) {
         super(name);
     }
 
@@ -26,6 +26,11 @@ public class Ennemi extends Personnage {
 
     @Override
     public void performAttack(Personnage defender) {
+        if (defender.dodge()) {
+            System.out.println(defender.getName() + " a esquivé !");
+            defender.addStatsCombat(StatCombat.HITS_DODGED, 1);
+            return;
+        }
         int damage = this.getStat(Stat.ATTAQUE) - defender.getStat(Stat.DEFENSE);
         if (damage < 0){
             damage = 0;
