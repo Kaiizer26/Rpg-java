@@ -18,7 +18,7 @@ public class Chevalier extends Ally{
         super(name);
     }
     public String toString(){
-        return "Nom : " + this.getName() + "\nStat : "+ this.getAllStats() +"\nStart : " + this.isStart() + "\nInventaire : " + this.getInventory();
+        return "Nom : " + this.getName() + "\nStat : "+ this.getAllStats() +"\nStart : " + this.isStart();
     }
 
 

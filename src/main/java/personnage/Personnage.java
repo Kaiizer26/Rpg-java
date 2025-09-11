@@ -13,25 +13,46 @@ public abstract class Personnage implements IPersonnage {
     private boolean start;
     private Map<Stat, Integer> stats;
     private Map<StatCombat, Integer> statsCombat;
-    private Map<String, Integer> inventory;
+
+    // NOUVEAU : Système de niveau et expérience
+    private int baseStatPoints;
+
+    private int level;
+    private int experience;
+    private int experienceToNextLevel;
+
+    // SUPPRIMÉ : inventory individuel (maintenant géré globalement)
+    // private Map<String, Integer> inventory;
+
     public Personnage(){
         this.name = "Bot";
         this.stats = new EnumMap<>(Stat.class);
         this.statsCombat = new EnumMap<>(StatCombat.class);
+        this.start = false;
+
+        this.level = 1; // Commencer au niveau 1
+        this.experience = 0;
+        this.experienceToNextLevel = 100;
+
+        // Initialiser avec des stats de base aléatoires
+        int totalBaseStats = 0;
         for (Stat stat : Stat.values()) {
-            stats.put(stat, random.nextInt(100)); // pour chaque stat aléatoire de 0 à 99
+            int statValue = random.nextInt(20); // stats de base plus faibles
+            stats.put(stat, statValue);
+            totalBaseStats += statValue;
         }
-        this.start=false;
-        this.inventory = new TreeMap<>();
+        this.baseStatPoints = totalBaseStats;
+
     }
+
     public Personnage(String name){
         this();
         this.name = name;
-
     }
+
     public Personnage(String name, int hp, int defense, int atk, int speed, int luck, boolean start){
         this.name = name;
-        this.start=start;
+        this.start = start;
         this.stats = new EnumMap<>(Stat.class);
         this.statsCombat = new EnumMap<>(StatCombat.class);
         stats.put(Stat.HP, hp);
@@ -39,11 +60,23 @@ public abstract class Personnage implements IPersonnage {
         stats.put(Stat.DEFENSE, defense);
         stats.put(Stat.SPEED, speed);
         stats.put(Stat.LUCK, luck);
-        this.inventory = new TreeMap<>();
+
+        // NOUVEAU : Initialisation du système de niveau
+        // Initialisation du système de niveau
+        this.level = 1; // Commencer au niveau 1
+        this.experience = 0;
+        this.experienceToNextLevel = 100;
+        this.baseStatPoints = hp + atk + defense + speed + luck;
+
     }
 
     public String toString(){
-        return "Nom : " + this.getName() +  "\nInventaire : " + this.getInventory() + "\nStat : " + this.getAllStats() + "\nStart : " + this.isStart();
+        return "Nom : " + this.getName() +
+                "\nNiveau : " + this.getLevel() +
+                " (EXP: " + this.getExperience() + "/" + this.getExperienceToNextLevel() + ")" +
+                "\nPoints disponibles : " + this.getAvailablePoints() +
+                "\nStats : " + this.getAllStats() +
+                "\nStart : " + this.isStart();
     }
 
     public String getName() {
@@ -59,10 +92,25 @@ public abstract class Personnage implements IPersonnage {
     }
 
     public void setStat(Stat stat, int value){
-        stats.put(stat, value);
+        // Valider que la valeur est entre 0 et 99
+        value = Math.max(0, Math.min(99, value));
+
+        // Calculer les points utilisés si on appliquait ce changement
+        int currentValue = stats.getOrDefault(stat, 0);
+        int pointsDifference = value - currentValue;
+        int availablePoints = getAvailablePoints();
+
+        // Vérifier si on a assez de points disponibles
+        if (pointsDifference <= availablePoints) {
+            stats.put(stat, value);
+        } else {
+            // Optionnel : lancer une exception ou afficher un message
+            System.out.println("Pas assez de points disponibles! Points disponibles: " + availablePoints);
+        }
     }
-     Map<Stat, Integer> getAllStats(){
-        return this.stats;
+
+    public Map<Stat, Integer> getAllStats(){
+        return new EnumMap<>(this.stats); // Retourner une copie pour éviter les modifications externes
     }
 
     int getStatCombat(StatCombat stat){
@@ -74,12 +122,13 @@ public abstract class Personnage implements IPersonnage {
     }
 
     public void addStatsCombat(StatCombat stat, int value){
-        this.statsCombat.put(stat, this.getStatCombat(stat)+ value);
+        this.statsCombat.put(stat, this.getStatCombat(stat) + value);
     }
 
     Map<StatCombat, Integer> getAllStatsCombat(){
         return this.statsCombat;
     }
+
     public boolean isStart() {
         return start;
     }
@@ -88,6 +137,50 @@ public abstract class Personnage implements IPersonnage {
         this.start = start;
     }
 
+    // NOUVEAU : Méthodes pour le système de niveau/expérience
+    public int getLevel() {
+        return level;
+    }
+
+    public void setLevel(int level) {
+        this.level = Math.max(1, level);
+    }
+
+    public int getExperience() {
+        return experience;
+    }
+
+    public void addExperience(int exp) {
+        this.experience += exp;
+        checkLevelUp();
+    }
+
+    public int getExperienceToNextLevel() {
+        return experienceToNextLevel;
+    }
+
+
+    // Vérifier si le personnage monte de niveau
+    private void checkLevelUp() {
+        while (experience >= experienceToNextLevel) {
+            experience -= experienceToNextLevel;
+            level++;
+            // Augmenter légèrement l'exp nécessaire pour le prochain niveau
+            experienceToNextLevel = (int)(experienceToNextLevel * 1.1);
+        }
+    }
+
+    // Calculer le coût total des stats actuelles
+    public int getTotalStatCost() {
+        int total = 0;
+        for (Integer statValue : stats.values()) {
+            total += statValue;
+        }
+        return total;
+    }
+
+    // SUPPRIMÉ : Méthodes d'inventaire (maintenant gérées globalement)
+    /*
     public Map<String, Integer> getInventory() {
         return this.inventory;
     }
@@ -106,9 +199,38 @@ public abstract class Personnage implements IPersonnage {
             this.inventory.remove(name); // si nb négatif de l'objet on supp
         }
     }
+    */
 
-    public String EndCombatMessage(){
-        return "Vous avez gagné ! \nNom : " + this.getName() +  "\nInventaire : " + this.getInventory() + "\nStats de Combat : " + this.getAllStatsCombat();
+    /**
+     * Calcule le nombre de points disponibles pour améliorer les stats
+     * Basé sur le niveau actuel du personnage moins les points déjà dépensés
+     * @return le nombre de points disponibles (peut être négatif si les stats dépassent le niveau)
+     */
+    // Méthode pour calculer les points disponibles
+    public int getAvailablePoints() {
+        // Points totaux = points de base + points bonus par niveau
+        int totalAllowedPoints = baseStatPoints + ((level - 1) * 5); // 5 points par niveau après le 1er
+
+        // Points actuellement dépensés
+        int spentPoints = getTotalStatCost();
+
+        // Points disponibles
+        return totalAllowedPoints - spentPoints;
     }
 
+    // Méthode pour monter de niveau (appelée après victoire en combat)
+    public void levelUp() {
+        this.level++;
+        // Chaque niveau donne 5 points de stats supplémentaires à dépenser
+        System.out.println(name + " monte au niveau " + level + "! +5 points de stats disponibles.");
+    }
+
+    public int getMaxAvailablePoints() {
+        return baseStatPoints + ((level - 1) * 5);
+    }
+    public String EndCombatMessage(){
+        return "Vous avez gagné ! \nNom : " + this.getName() +
+                "\nNiveau : " + this.getLevel() +
+                "\nStats de Combat : " + this.getAllStatsCombat();
+    }
 }

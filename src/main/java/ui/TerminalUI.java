@@ -482,4 +482,44 @@ public class TerminalUI {
         Thread.sleep(1500);
         return dodgeSuccess;
     }
+
+    /**
+     * Permet à l'utilisateur de saisir une ligne de texte
+     */
+    public String readLine() throws IOException {
+        StringBuilder input = new StringBuilder();
+        KeyStroke keyStroke;
+
+        // Position initiale du curseur
+        int x = 0;
+        int y = terminal.getCursorPosition().getRow();
+
+        while (true) {
+            keyStroke = terminal.readInput();
+
+            if (keyStroke.getKeyType() == KeyType.Enter) {
+                break; // Fin de la saisie
+            } else if (keyStroke.getKeyType() == KeyType.Backspace) {
+                if (input.length() > 0) {
+                    input.deleteCharAt(input.length() - 1);
+                    // Effacer le dernier caractère à l'écran
+                    terminal.setCursorPosition(x + input.length(), y);
+                    terminal.putCharacter(' ');
+                    terminal.setCursorPosition(x + input.length(), y);
+                    terminal.flush();
+                }
+            } else if (keyStroke.getCharacter() != null) {
+                input.append(keyStroke.getCharacter());
+                terminal.putCharacter(keyStroke.getCharacter());
+                terminal.flush();
+            }
+        }
+
+        // Aller à la ligne après validation
+        terminal.putCharacter('\n');
+        terminal.flush();
+
+        return input.toString();
+    }
+
 }

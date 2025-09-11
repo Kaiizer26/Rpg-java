@@ -1,23 +1,37 @@
 package personnage;
-
-import inventaire.Item;
 import stats.Stat;
 import stats.StatCombat;
 
+import java.util.EnumMap;
 import java.util.Map;
+import java.util.Random;
 
 public class Ennemi extends Personnage {
+
+    Random random = new Random();
+    private String name;
+    private boolean start;
+    private Map<Stat, Integer> stats;
+    private Map<StatCombat, Integer> statsCombat;
+
 
     public Ennemi(String name, int hp, int defense, int atk, int speed, int luck, boolean start) {
         super(name, hp, defense, atk, speed, luck, start);
     }
 
     public Ennemi() {
-        super();
+        this.name = "Bot";
+        this.stats = new EnumMap<>(Stat.class);
+        this.statsCombat = new EnumMap<>(StatCombat.class);
+        this.start = false;
+        for (Stat stat : Stat.values()) {
+            stats.put(stat, random.nextInt(100)); // pour chaque stat aléatoire de 0 à 99
+        }
     }
 
     public Ennemi(String name) {
-        super(name);
+        this();
+        this.name = name;
     }
 
     public String toString() {

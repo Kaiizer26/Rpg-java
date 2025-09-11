@@ -26,11 +26,6 @@ public class Ally extends Personnage {
 
     @Override
     public void performAttack(Personnage defender) {
-        if (defender.dodge()) {
-            System.out.println(defender.getName() + " a esquivé !");
-            defender.addStatsCombat(StatCombat.HITS_DODGED, 1);
-            return;
-        }
         int damage = this.getStat(Stat.ATTAQUE) - defender.getStat(Stat.DEFENSE);
         if (damage < 0){
             damage = 0;

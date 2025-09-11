@@ -3,6 +3,8 @@ import stats.Stat;
 import ui.TerminalUI;
 import combat.Combat;
 import team.TeamManager;
+import team.CustomizationManager;
+import inventaire.GlobalInventory;
 import com.googlecode.lanterna.TextColor;
 
 import java.io.IOException;
@@ -16,6 +18,10 @@ public class rpg_main {
     private static Combat combatManager = new Combat(ui);
     // Instance du gestionnaire d'équipe
     private static TeamManager teamManager = new TeamManager(ui);
+    // NOUVEAU : Instance de l'inventaire global
+    private static GlobalInventory globalInventory = new GlobalInventory();
+    // NOUVEAU : Instance du gestionnaire de personnalisation
+    private static CustomizationManager customizationManager = new CustomizationManager(ui, teamManager, globalInventory);
 
     /**
      * Initialise les personnages et la collection
@@ -31,10 +37,13 @@ public class rpg_main {
         knight2.setStat(Stat.SPEED, 60);
         knight2.setStat(Stat.LUCK, 57);
 
-        // Ajout d'objets à l'inventaire de Gustave
-        knight1.addItem("Pistolet", 1);
-        knight1.addItem("Arbre", 1);
-        knight1.addItem("Zebre", 1);
+        // NOUVEAU : Ajout d'objets à l'inventaire GLOBAL au lieu de l'inventaire du personnage
+        globalInventory.addItem("Pistolet", 1);
+        globalInventory.addItem("Arbre", 1);
+        globalInventory.addItem("Zebre", 1);
+        globalInventory.addItem("Potion de soin", 5);
+        globalInventory.addItem("Épée rouillée", 2);
+        globalInventory.addItem("Bouclier en bois", 1);
 
         // Création d'autres personnages pour la collection
         Chevalier jordy = new Chevalier("Jordy");
@@ -71,8 +80,20 @@ public class rpg_main {
             return;
         }
 
-        // Pour l'instant, utiliser le premier membre de l'équipe
-        Personnage selectedHero = activeTeam.get(0);
+        // AMÉLIORATION : Vérifier qu'il y a au moins un personnage vivant
+        Ally firstAliveMember = teamManager.getFirstAliveMember();
+        if (firstAliveMember == null) {
+            ui.clearScreen();
+            ui.printColoredLine("❌ Aucun personnage vivant dans l'équipe !", TextColor.ANSI.RED);
+            ui.printColoredLine("Tous vos personnages sont morts. Allez dans 'Personnalisation' pour les soigner.", TextColor.ANSI.YELLOW);
+            ui.printLine("");
+            ui.printColoredLine("Appuyez sur une touche pour continuer...", TextColor.ANSI.CYAN);
+            ui.waitForKeyPress();
+            return;
+        }
+
+        // Utiliser le premier membre vivant de l'équipe
+        Personnage selectedHero = firstAliveMember;
 
         if (selectedHero instanceof Chevalier) {
             // Créer des adversaires
@@ -80,11 +101,32 @@ public class rpg_main {
 
             ui.clearScreen();
             ui.printColoredLine("🏆 Tournoi avec " + selectedHero.getName(), TextColor.ANSI.CYAN);
+            ui.printColoredText("Niveau: ", TextColor.ANSI.YELLOW);
+            ui.printLine(selectedHero.getLevel() + "");
+            ui.printColoredText("HP: ", TextColor.ANSI.GREEN);
+            ui.printLine(selectedHero.getStat(Stat.HP) + "");
             ui.printLine("");
             ui.printColoredLine("Appuyez sur une touche pour commencer...", TextColor.ANSI.YELLOW);
             ui.waitForKeyPress();
 
             combatManager.startTournament((Chevalier) selectedHero, enemies);
+
+            // NOUVEAU : Après le combat, donner de l'expérience
+            if (selectedHero.getStat(Stat.HP) > 0) { // Si le héros a survécu
+                selectedHero.addExperience(50); // 50 exp pour avoir participé au tournoi
+
+                ui.clearScreen();
+                ui.printColoredLine("🎉 Tournoi terminé !", TextColor.ANSI.GREEN);
+                ui.printColoredLine("+" + 50 + " EXP gagné !", TextColor.ANSI.YELLOW);
+                ui.printColoredText("Niveau actuel: ", TextColor.ANSI.CYAN);
+                ui.printLine(selectedHero.getLevel() + "");
+                ui.printColoredText("EXP: ", TextColor.ANSI.CYAN);
+                ui.printLine(selectedHero.getExperience() + "/" + selectedHero.getExperienceToNextLevel());
+                ui.printLine("");
+                ui.printColoredLine("Appuyez sur une touche pour continuer...", TextColor.ANSI.CYAN);
+                ui.waitForKeyPress();
+            }
+
         } else {
             ui.clearScreen();
             ui.printColoredLine("❌ Le personnage sélectionné ne peut pas participer au tournoi.", TextColor.ANSI.RED);
@@ -93,6 +135,36 @@ public class rpg_main {
             ui.printColoredLine("Appuyez sur une touche pour continuer...", TextColor.ANSI.CYAN);
             ui.waitForKeyPress();
         }
+    }
+
+    /**
+     * NOUVELLE MÉTHODE : Afficher des informations de debug/développement
+     */
+    private static void showDebugInfo() throws IOException {
+        ui.clearScreen();
+        ui.printColoredLine("🔧 INFORMATIONS DE DEBUG", TextColor.ANSI.MAGENTA);
+        ui.printLine("");
+
+        ui.printColoredLine("=== ÉQUIPE ACTIVE ===", TextColor.ANSI.CYAN);
+        List<Ally> activeTeam = teamManager.getActiveTeam();
+        for (Ally member : activeTeam) {
+            ui.printColoredText("- ", TextColor.ANSI.WHITE);
+            ui.printColoredText(member.getName(), TextColor.ANSI.YELLOW);
+            ui.printColoredText(" (Niv." + member.getLevel() + ")", TextColor.ANSI.GREEN);
+            ui.printColoredText(" HP: " + member.getStat(Stat.HP), member.getStat(Stat.HP) > 0 ? TextColor.ANSI.GREEN : TextColor.ANSI.RED);
+            ui.printLine("");
+        }
+
+        ui.printLine("");
+        ui.printColoredLine("=== INVENTAIRE GLOBAL ===", TextColor.ANSI.CYAN);
+        ui.printColoredText("Items uniques: ", TextColor.ANSI.YELLOW);
+        ui.printLine(globalInventory.getUniqueItemCount() + "");
+        ui.printColoredText("Total items: ", TextColor.ANSI.YELLOW);
+        ui.printLine(globalInventory.getTotalItemCount() + "");
+
+        ui.printLine("");
+        ui.printColoredLine("Appuyez sur une touche pour continuer...", TextColor.ANSI.CYAN);
+        ui.waitForKeyPress();
     }
 
     public static void main(String[] args) {
@@ -121,8 +193,8 @@ public class rpg_main {
                         teamManager.showTeamManagementMenu();
                         break;
 
-                    case 3: // Personnalisation
-                        ui.showNotImplemented("Personnalisation");
+                    case 3: // Personnalisation - NOUVEAU : Implémenté !
+                        customizationManager.showCustomizationMenu();
                         break;
 
                     case 4: // Boutique
@@ -144,6 +216,7 @@ public class rpg_main {
 
         } catch (IOException | InterruptedException e) {
             System.err.println("Erreur durant l'exécution du jeu : " + e.getMessage());
+            e.printStackTrace(); // AMÉLIORATION : Afficher la stack trace pour debug
         } finally {
             // Nettoyage de l'interface utilisateur
             try {

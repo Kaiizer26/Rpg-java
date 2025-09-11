@@ -1,7 +1,7 @@
 package team;
 
-import personnage.Ally;
 import personnage.Personnage;
+import personnage.Ally;
 import ui.TerminalUI;
 import com.googlecode.lanterna.TextColor;
 
@@ -10,7 +10,7 @@ import java.util.*;
 
 /**
  * Classe responsable de la gestion des équipes
- * Gère la collection de personnages et l'équipe active
+ * Utilise des types cohérents (Personnage/Ally)
  */
 public class TeamManager {
     private static final int MAX_TEAM_SIZE = 3;
@@ -19,101 +19,86 @@ public class TeamManager {
     private List<Ally> activeTeam; // Équipe active (max 3)
     private TerminalUI ui;
 
-    /**
-     * Constructeur
-     */
     public TeamManager(TerminalUI ui) {
         this.ui = ui;
         this.collection = new ArrayList<>();
         this.activeTeam = new ArrayList<>();
     }
 
-    /**
-     * Ajoute un personnage à la collection
-     */
+    // Méthodes de base inchangées...
     public void addToCollection(Ally personnage) {
         if (!collection.contains(personnage)) {
             collection.add(personnage);
         }
     }
 
-    /**
-     * Retire un personnage de la collection
-     */
-    public void removeFromCollection(Ally personnage) {
-        collection.remove(personnage);
-        activeTeam.remove(personnage); // Le retirer aussi de l'équipe active
-    }
-
-    /**
-     * Ajoute un personnage à l'équipe active
-     */
     public boolean addToTeam(Ally personnage) {
-        if (activeTeam.size() >= MAX_TEAM_SIZE) {
-            return false; // Équipe pleine
+        if (activeTeam.size() >= MAX_TEAM_SIZE ||
+                !collection.contains(personnage) ||
+                activeTeam.contains(personnage)) {
+            return false;
         }
-        if (!collection.contains(personnage)) {
-            return false; // Personnage pas dans la collection
-        }
-        if (activeTeam.contains(personnage)) {
-            return false; // Déjà dans l'équipe
-        }
-
         activeTeam.add(personnage);
         return true;
     }
 
-    /**
-     * Retire un personnage de l'équipe active
-     */
     public void removeFromTeam(Ally personnage) {
         activeTeam.remove(personnage);
     }
 
-    /**
-     * Vérifie si l'équipe est pleine
-     */
     public boolean isTeamFull() {
         return activeTeam.size() >= MAX_TEAM_SIZE;
     }
 
-    /**
-     * Retourne la taille de l'équipe active
-     */
     public int getTeamSize() {
         return activeTeam.size();
     }
 
-    /**
-     * Retourne une copie de la collection
-     */
+    // CORRECTION : Retourner le bon type
     public List<Ally> getCollection() {
         return new ArrayList<>(collection);
     }
 
-    /**
-     * Retourne une copie de l'équipe active
-     */
     public List<Ally> getActiveTeam() {
         return new ArrayList<>(activeTeam);
     }
 
     /**
-     * Retourne les personnages disponibles (dans la collection mais pas dans l'équipe)
+     * NOUVELLE MÉTHODE : Obtenir le prochain membre d'équipe vivant
+     * @param currentMember Le membre actuel (mort)
+     * @return Le prochain membre vivant, ou null si aucun
      */
-    public List<Ally> getAvailablePersonnages() {
-        List<Ally> available = new ArrayList<>();
-        for (Ally p : collection) {
-            if (!activeTeam.contains(p)) {
-                available.add(p);
+    public Ally getNextAliveMember(Ally currentMember) {
+        // Retirer le membre mort de l'équipe active
+        activeTeam.remove(currentMember);
+
+        // Chercher le prochain membre vivant
+        for (Ally member : activeTeam) {
+            if (member.getStat(stats.Stat.HP) > 0) {
+                return member;
             }
         }
-        return available;
+        return null; // Plus de membres vivants
     }
 
     /**
-     * Affiche et gère le menu principal de gestion d'équipe
+     * NOUVELLE MÉTHODE : Vérifier si l'équipe a encore des membres vivants
      */
+    public boolean hasAliveMember() {
+        return activeTeam.stream().anyMatch(p -> p.getStat(stats.Stat.HP) > 0);
+    }
+
+    /**
+     * NOUVELLE MÉTHODE : Obtenir le premier membre vivant de l'équipe
+     */
+    public Ally getFirstAliveMember() {
+        return activeTeam.stream()
+                .filter(p -> p.getStat(stats.Stat.HP) > 0)
+                .findFirst()
+                .orElse(null);
+    }
+
+    // Le reste des méthodes UI reste identique mais avec les bons types...
     public void showTeamManagementMenu() throws IOException, InterruptedException {
         boolean continueManaging = true;
 
@@ -126,38 +111,21 @@ public class TeamManager {
                     "📦 Voir la collection",
                     "➕ Ajouter à l'équipe",
                     "➖ Retirer de l'équipe",
-                    "🔄 Échanger des membres",
                     "🔙 Retour au menu principal"
             };
 
             int choice = ui.showMenu(options, "🛡️ GESTION D'ÉQUIPE");
 
             switch (choice) {
-                case 1:
-                    showActiveTeam();
-                    break;
-                case 2:
-                    showCollection();
-                    break;
-                case 3:
-                    addPersonnageToTeam();
-                    break;
-                case 4:
-                    removePersonnageFromTeam();
-                    break;
-                case 5:
-                    swapTeamMembers();
-                    break;
-                case 6:
-                    continueManaging = false;
-                    break;
+                case 1: showActiveTeam(); break;
+                case 2: showCollection(); break;
+                case 3: addPersonnageToTeam(); break;
+                case 4: removePersonnageFromTeam(); break;
+                case 5: continueManaging = false; break;
             }
         }
     }
 
-    /**
-     * Affiche un aperçu rapide de l'équipe
-     */
     private void displayTeamOverview() throws IOException {
         ui.printColoredLine("╔══════════════════════════════════════╗", TextColor.ANSI.CYAN);
         ui.printColoredLine("║            APERÇU ÉQUIPE             ║", TextColor.ANSI.CYAN);
@@ -169,13 +137,9 @@ public class TeamManager {
 
         ui.printColoredText("📦 Collection totale: ", TextColor.ANSI.YELLOW);
         ui.printLine(collection.size() + " personnages");
-
         ui.printLine("");
     }
 
-    /**
-     * Affiche l'équipe active
-     */
     private void showActiveTeam() throws IOException {
         ui.clearScreen();
         ui.printColoredLine("👥 ÉQUIPE ACTIVE", TextColor.ANSI.CYAN);
@@ -187,8 +151,16 @@ public class TeamManager {
             for (int i = 0; i < activeTeam.size(); i++) {
                 Ally p = activeTeam.get(i);
                 ui.printColoredText((i + 1) + ". ", TextColor.ANSI.YELLOW);
-                ui.printColoredText("⚔️ ", TextColor.ANSI.RED);
-                ui.printLine(p.getName() + " (" + p.getClass().getSimpleName() + ")");
+
+                // Afficher le statut de vie
+                if (p.getStat(stats.Stat.HP) > 0) {
+                    ui.printColoredText("❤️ ", TextColor.ANSI.GREEN);
+                } else {
+                    ui.printColoredText("💀 ", TextColor.ANSI.RED);
+                }
+
+                ui.printLine(p.getName() + " (" + p.getClass().getSimpleName() +
+                        ") - HP: " + p.getStat(stats.Stat.HP));
             }
         }
 
@@ -197,9 +169,6 @@ public class TeamManager {
         ui.waitForKeyPress();
     }
 
-    /**
-     * Affiche toute la collection
-     */
     private void showCollection() throws IOException {
         ui.clearScreen();
         ui.printColoredLine("📦 COLLECTION COMPLÈTE", TextColor.ANSI.CYAN);
@@ -212,7 +181,6 @@ public class TeamManager {
                 Ally p = collection.get(i);
                 ui.printColoredText((i + 1) + ". ", TextColor.ANSI.YELLOW);
 
-                // Indiquer si le personnage est dans l'équipe active
                 if (activeTeam.contains(p)) {
                     ui.printColoredText("🟢 ", TextColor.ANSI.GREEN);
                 } else {
@@ -224,7 +192,6 @@ public class TeamManager {
 
             ui.printLine("");
             ui.printColoredLine("🟢 = Dans l'équipe active", TextColor.ANSI.GREEN);
-            ui.printColoredLine("⚫ = Disponible", TextColor.ANSI.WHITE);
         }
 
         ui.printLine("");
@@ -232,25 +199,25 @@ public class TeamManager {
         ui.waitForKeyPress();
     }
 
-    /**
-     * Ajouter un personnage à l'équipe
-     */
     private void addPersonnageToTeam() throws IOException {
         if (isTeamFull()) {
             ui.clearScreen();
             ui.printColoredLine("❌ L'équipe est déjà pleine ! (3/3)", TextColor.ANSI.RED);
-            ui.printColoredLine("Retirez d'abord un membre.", TextColor.ANSI.YELLOW);
-            ui.printLine("");
             ui.printColoredLine("Appuyez sur une touche pour continuer...", TextColor.ANSI.CYAN);
             ui.waitForKeyPress();
             return;
         }
 
-        List<Ally> available = getAvailablePersonnages();
+        List<Ally> available = new ArrayList<>();
+        for (Ally p : collection) {
+            if (!activeTeam.contains(p)) {
+                available.add(p);
+            }
+        }
+
         if (available.isEmpty()) {
             ui.clearScreen();
-            ui.printColoredLine("❌ Aucun personnage disponible à ajouter.", TextColor.ANSI.RED);
-            ui.printLine("");
+            ui.printColoredLine("❌ Aucun personnage disponible.", TextColor.ANSI.RED);
             ui.printColoredLine("Appuyez sur une touche pour continuer...", TextColor.ANSI.CYAN);
             ui.waitForKeyPress();
             return;
@@ -260,7 +227,6 @@ public class TeamManager {
         ui.printColoredLine("➕ AJOUTER À L'ÉQUIPE", TextColor.ANSI.GREEN);
         ui.printLine("");
 
-        // Créer les options pour le menu
         String[] options = new String[available.size() + 1];
         for (int i = 0; i < available.size(); i++) {
             Ally p = available.get(i);
@@ -268,28 +234,33 @@ public class TeamManager {
         }
         options[available.size()] = "🔙 Annuler";
 
-        int choice = ui.showMenu(options, "Choisissez un personnage à ajouter:");
+        int choice = ui.showMenu(options, "Choisissez un personnage:");
 
         if (choice <= available.size()) {
             Ally selected = available.get(choice - 1);
             addToTeam(selected);
 
             ui.clearScreen();
-            ui.printColoredLine("✅ " + selected.getName() + " a été ajouté à l'équipe !", TextColor.ANSI.GREEN);
-            ui.printLine("");
+            ui.printColoredLine("✅ " + selected.getName() + " ajouté à l'équipe !", TextColor.ANSI.GREEN);
             ui.printColoredLine("Appuyez sur une touche pour continuer...", TextColor.ANSI.CYAN);
             ui.waitForKeyPress();
         }
     }
 
-    /**
-     * Retirer un personnage de l'équipe
-     */
     private void removePersonnageFromTeam() throws IOException {
         if (activeTeam.isEmpty()) {
             ui.clearScreen();
             ui.printColoredLine("❌ L'équipe est vide.", TextColor.ANSI.RED);
-            ui.printLine("");
+            ui.printColoredLine("Appuyez sur une touche pour continuer...", TextColor.ANSI.CYAN);
+            ui.waitForKeyPress();
+            return;
+        }
+
+        // NOUVELLE VÉRIFICATION : Empêcher de retirer le dernier membre
+        if (activeTeam.size() == 1) {
+            ui.clearScreen();
+            ui.printColoredLine("❌ Impossible de retirer le dernier membre de l'équipe !", TextColor.ANSI.RED);
+            ui.printColoredLine("💡 Il doit toujours rester au moins un personnage pour combattre.", TextColor.ANSI.YELLOW);
             ui.printColoredLine("Appuyez sur une touche pour continuer...", TextColor.ANSI.CYAN);
             ui.waitForKeyPress();
             return;
@@ -313,27 +284,9 @@ public class TeamManager {
             removeFromTeam(selected);
 
             ui.clearScreen();
-            ui.printColoredLine("✅ " + selected.getName() + " a été retiré de l'équipe.", TextColor.ANSI.YELLOW);
-            ui.printLine("");
+            ui.printColoredLine("✅ " + selected.getName() + " retiré de l'équipe.", TextColor.ANSI.YELLOW);
             ui.printColoredLine("Appuyez sur une touche pour continuer...", TextColor.ANSI.CYAN);
             ui.waitForKeyPress();
         }
-    }
-
-    /**
-     * Échange direct entre collection et équipe
-     */
-    private void swapTeamMembers() throws IOException {
-        if (activeTeam.isEmpty() || getAvailablePersonnages().isEmpty()) {
-            ui.clearScreen();
-            ui.printColoredLine("❌ Échange impossible.", TextColor.ANSI.RED);
-            ui.printColoredLine("Il faut au moins un membre dans l'équipe et un disponible.", TextColor.ANSI.YELLOW);
-            ui.printLine("");
-            ui.printColoredLine("Appuyez sur une touche pour continuer...", TextColor.ANSI.CYAN);
-            ui.waitForKeyPress();
-            return;
-        }
-
-        ui.showNotImplemented("Échange de membres");
     }
 }
