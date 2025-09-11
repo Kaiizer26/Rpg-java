@@ -267,10 +267,10 @@ public class Combat {
      * @param team L'équipe du joueur
      * @param enemies Tableau des ennemis à affronter
      */
-    public void startTeamTournament(List<Ally> team, Personnage[] enemies) throws IOException, InterruptedException {
+    public boolean startTeamTournament(List<Ally> team, Personnage[] enemies) throws IOException, InterruptedException {
         if (team.isEmpty()) {
             ui.showCombatEnd(false, "❌ Aucune équipe disponible pour le combat !");
-            return;
+            return false;
         }
 
         // Affichage de l'équipe du joueur
@@ -287,7 +287,6 @@ public class Combat {
         // Début du combat
         ui.showCombatStart();
 
-        // === BOUCLE DE COMBAT PRINCIPALE ===
         boolean teamAlive = true;
         int enemyIndex = 0;
 
@@ -303,12 +302,12 @@ public class Combat {
                 }
 
                 if (currentEnemy.getStat(Stat.HP) <= 0) {
-                    enemyIndex++; // Passer à l'ennemi suivant
+                    enemyIndex++;
                     ui.animatedText("🏆 Ennemi vaincu ! Prochain adversaire...", TextColor.ANSI.GREEN, 50);
                     Thread.sleep(2000);
                 }
             } else {
-                enemyIndex++; // Ennemi déjà mort, passer au suivant
+                enemyIndex++;
             }
 
             if (!hasAliveAllies(team)) {
@@ -319,16 +318,14 @@ public class Combat {
 
         // === FIN DU TOURNOI ===
         boolean teamWon = hasAliveAllies(team) && teamAlive;
+
         if (teamWon) {
-            // Calculer les survivants
             int survivors = 0;
             for (Ally ally : team) {
                 if (ally.getStat(Stat.HP) > 0) survivors++;
             }
 
             ui.showCombatEnd(true, "🏆 Votre équipe a remporté le tournoi ! " + survivors + " survivant(s) !");
-
-            // Donner de l'expérience bonus à tous les survivants
             for (Ally ally : team) {
                 if (ally.getStat(Stat.HP) > 0) {
                     ally.addExperience(50); // Bonus de tournoi
@@ -337,7 +334,10 @@ public class Combat {
         } else {
             ui.showCombatEnd(false, "💀 Votre équipe a été éliminée du tournoi...");
         }
+
+        return teamWon; // ← IMPORTANT : retourne le résultat final
     }
+
 
     /**
      * Lance un combat simple entre une équipe et un ennemi

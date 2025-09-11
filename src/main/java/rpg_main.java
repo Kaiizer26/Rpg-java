@@ -5,6 +5,7 @@ import combat.Combat;
 import team.TeamManager;
 import team.CustomizationManager;
 import inventaire.GlobalInventory;
+import shop.ShopManager;
 import com.googlecode.lanterna.TextColor;
 
 import java.io.IOException;
@@ -22,6 +23,8 @@ public class rpg_main {
     private static GlobalInventory globalInventory = new GlobalInventory();
     // Instance du gestionnaire de personnalisation
     private static CustomizationManager customizationManager = new CustomizationManager(ui, teamManager, globalInventory);
+    // Instance du gestionnaire de boutique
+    private static ShopManager shopManager = new ShopManager(ui, teamManager, globalInventory);
 
     /**
      * Initialise les personnages et la collection
@@ -37,10 +40,12 @@ public class rpg_main {
         knight2.setStat(Stat.SPEED, 60);
         knight2.setStat(Stat.LUCK, 57);
 
+        // Donner de l'or initial au joueur
+        globalInventory.addGold(500); // Or de départ
+
         // Ajout d'objets à l'inventaire global
         globalInventory.addItem("Table Ikea", 1);
         globalInventory.addItem("Potion de soin", 5);
-
 
         // Création d'autres personnages pour la collection
         Chevalier jordy = new Chevalier("Jordy");
@@ -132,9 +137,9 @@ public class rpg_main {
         };
 
         // NOUVEAU : Utiliser le système de combat en équipe
-        combatManager.startTeamTournament(activeTeam, enemies);
+        boolean tournamentWon = combatManager.startTeamTournament(activeTeam, enemies);
 
-        // Après le tournoi, donner de l'expérience aux survivants
+        // Après le tournoi, donner de l'expérience aux survivants ET de l'or si victoire
         int survivors = 0;
         for (Ally ally : activeTeam) {
             if (ally.getStat(Stat.HP) > 0) {
@@ -148,6 +153,14 @@ public class rpg_main {
             ui.printColoredLine("🎉 Tournoi terminé !", TextColor.ANSI.GREEN);
             ui.printColoredLine("Survivants: " + survivors + "/" + activeTeam.size(), TextColor.ANSI.YELLOW);
             ui.printColoredLine("+" + 75 + " EXP bonus pour chaque survivant !", TextColor.ANSI.MAGENTA);
+
+            // Récompense en or si victoire
+            if (tournamentWon) {
+                int goldReward = 150 + (survivors * 25); // Bonus basé sur les survivants
+                globalInventory.addGold(goldReward);
+                ui.printColoredLine("💰 +" + goldReward + " or pour la victoire !", TextColor.ANSI.YELLOW);
+            }
+
             ui.printLine("");
             ui.printColoredLine("Appuyez sur une touche pour continuer...", TextColor.ANSI.CYAN);
             ui.waitForKeyPress();
@@ -195,15 +208,20 @@ public class rpg_main {
         int choice = ui.showMenu(enemyOptions, "Adversaire:");
 
         Personnage enemy = null;
+        int goldReward = 0;
+
         switch (choice) {
             case 1:
                 enemy = new Chevalier("Garde débutant", 60, 15, 25, 15, 10, false);
+                goldReward = 30;
                 break;
             case 2:
                 enemy = new Chevalier("Soldat expérimenté", 85, 20, 35, 20, 15, false);
+                goldReward = 50;
                 break;
             case 3:
                 enemy = new Chevalier("Chevalier royal", 110, 25, 45, 25, 20, false);
+                goldReward = 75;
                 break;
             case 4:
                 return; // Retour
@@ -212,7 +230,7 @@ public class rpg_main {
         if (enemy != null) {
             boolean won = combatManager.startTeamVsEnemyCombat(activeTeam, enemy);
 
-            // Donner de l'expérience après le combat d'entraînement
+            // Donner de l'expérience et de l'or après le combat d'entraînement
             int expGain = 25; // Moins d'exp qu'un tournoi
             for (Ally ally : activeTeam) {
                 if (ally.getStat(Stat.HP) > 0) {
@@ -221,9 +239,11 @@ public class rpg_main {
             }
 
             if (won) {
+                globalInventory.addGold(goldReward);
                 ui.clearScreen();
                 ui.printColoredLine("✅ Combat d'entraînement terminé !", TextColor.ANSI.GREEN);
                 ui.printColoredLine("+" + expGain + " EXP pour les survivants !", TextColor.ANSI.YELLOW);
+                ui.printColoredLine("💰 +" + goldReward + " or pour la victoire !", TextColor.ANSI.YELLOW);
                 ui.printLine("");
                 ui.printColoredLine("Appuyez sur une touche pour continuer...", TextColor.ANSI.CYAN);
                 ui.waitForKeyPress();
@@ -251,6 +271,8 @@ public class rpg_main {
 
         ui.printLine("");
         ui.printColoredLine("=== INVENTAIRE GLOBAL ===", TextColor.ANSI.CYAN);
+        ui.printColoredText("Or: ", TextColor.ANSI.YELLOW);
+        ui.printLine(globalInventory.getGold() + " pièces");
         ui.printColoredText("Items uniques: ", TextColor.ANSI.YELLOW);
         ui.printLine(globalInventory.getUniqueItemCount() + "");
         ui.printColoredText("Total items: ", TextColor.ANSI.YELLOW);
@@ -329,7 +351,7 @@ public class rpg_main {
                         break;
 
                     case 4: // Boutique
-                        ui.showNotImplemented("Boutique");
+                        shopManager.showShopMenu();
                         break;
 
                     case 5: // Quitter le jeu
@@ -356,5 +378,4 @@ public class rpg_main {
                 System.err.println("Erreur lors de la fermeture : " + e.getMessage());
             }
         }
-    }
-}
+    }}

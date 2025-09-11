@@ -54,6 +54,11 @@ public class TeamManager {
         return activeTeam.size();
     }
 
+    // NOUVELLE MÉTHODE pour la boutique
+    public int getCollectionSize() {
+        return collection.size();
+    }
+
     // CORRECTION : Retourner le bon type
     public List<Ally> getCollection() {
         return new ArrayList<>(collection);
